@@ -6,6 +6,7 @@ Generalization at retrieval with a Dynamic Eigen Net
 
 Run toy_example.py to produce data presented in the first three tables. You can change between the linear, saturate (BSB), and stp (DEN) versions of the associative net by changing the value of the hyperparameter, "feedback".
 
+
 hyperparameters include:
    eps         - convergence criterion
    eta         - learning rate (kept at 1)
@@ -28,7 +29,9 @@ hyperparameters include:
 ###RUNNING THE BIGRAM EXAMPLES####
 The first step is to load the corpus, extract a vocabulary of all the unique words. The matrix E only applies when using distributed representations. You can ignore it when using a localist representation. I note here that the reason this stage is done in multiple stages is to facilitate counting multiple separate chunks of the corpus in parallel. Only one chunk should suffice for corpuses that are not too much larger than 100 mbs. It is assumed that the corpus is a subdirectory inside rsc, and that the corpus txt file is the has the exact same name (not including the file extension).
 
-Initialize the corpus by running, "count.py init <corpus_path>", where <corpus_path> may be "TASA" if "TASA" is a directory inside the rsc folder, and it contains a text file named "TASA.txt". It's assumed that the corpus contains sentences separated by newline (\n) characters. 
+Initialize the corpus by running, "count.py init <corpus_path>", where <corpus_path> may be "TASA" if "TASA" is a directory inside the rsc folder, and it contains a text file named "TASA.txt". It's assumed that the corpus contains sentences separated by newline (\n) characters.
+
+Once you got your corpus processed, run "bigram_gen.py TASA" to run model on the bigrams. This stage can take a good deal of time, so you likely want to set the job up and get on with other business. Change the value of the variable "sweep_idx" to run on different bigrams sets.
 
 
 
