@@ -94,9 +94,9 @@ class AssociativeNet(Model):
         for p in range(K):
             weights_p = []
             weights_p_idx = []
-            for q in xrange(K):
+            for q in range(K):
                 W_pq = self.COUNTS[p*V:(p+1)*V, q*V:(q+1)*V]
-                for i in xrange(len(W_pq.data)):
+                for i in range(len(W_pq.data)):
                     if W_pq.data[i] > 2:
                         W_pq.data[i] = 1
                     else:
@@ -256,6 +256,8 @@ class AssociativeNet(Model):
             echo_frames.append(deepcopy(self.echo_full))
 
 
+
+
             ###compute the next state
             x_new = self.MatMul(self.echo_full, x0) 
             vlens.append(np.linalg.norm(x_new))
@@ -293,16 +295,16 @@ class AssociativeNet(Model):
                 self.wf[corpus_process[i]] = 1
                 self.I[corpus_process[i]] = len(self.vocab)
                 self.vocab.append(corpus_process[i])
-                if corpus_process[i] in wvecs:
-                    self.E.append(list(wvecs[corpus_process[i]]))
-                else:
-                    if self.hparams["distributed"]:
-                        e = np.hstack([np.ones(self.N/2), -1*np.ones(self.N/2)])
-                        np.random.shuffle(e)
-                    elif self.hparams["localist"]:
-                        e = np.zeros(self.N)
-                        e[len(self.vocab)-1] = 1
-                    self.E.append(list(e))
+        #        if corpus_process[i] in wvecs:
+        #            self.E.append(list(wvecs[corpus_process[i]]))
+        #        else:
+        #            if self.hparams["distributed"]:
+        #                e = np.hstack([np.ones(self.N/2), -1*np.ones(self.N/2)])
+        #                np.random.shuffle(e)
+        #            elif self.hparams["localist"]:
+        #                e = np.zeros(self.N)
+        #                e[len(self.vocab)-1] = 1
+        #            self.E.append(list(e))
 
             self.V = len(self.vocab)
 
