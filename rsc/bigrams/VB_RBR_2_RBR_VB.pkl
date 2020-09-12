@@ -1,0 +1,1542 @@
+(lp0
+(I238
+(lp1
+Vbecome more
+p2
+aVmore become
+p3
+atp4
+a(I173
+(lp5
+Vlearn more
+p6
+aVmore learn
+p7
+atp8
+a(I79
+(lp9
+Vproduce more
+p10
+aVmore produce
+p11
+atp12
+a(I60
+(lp13
+Vspend more
+p14
+aVmore spend
+p15
+atp16
+a(I50
+(lp17
+Vtake more
+p18
+aVmore take
+p19
+atp20
+a(I46
+(lp21
+Vmove faster
+p22
+aVfaster move
+p23
+atp24
+a(I45
+(lp25
+Vfeel more
+p26
+aVmore feel
+p27
+atp28
+a(I43
+(lp29
+Vgive more
+p30
+aVmore give
+p31
+atp32
+a(I42
+(lp33
+Vgrow more
+p34
+aVmore grow
+p35
+atp36
+a(I42
+(lp37
+Vbecome less
+p38
+aVless become
+p39
+atp40
+a(I40
+(lp41
+Vdeal more
+p42
+aVmore deal
+p43
+atp44
+a(I39
+(lp45
+Vwant more
+p46
+aVmore want
+p47
+atp48
+a(I39
+(lp49
+Veat more
+p50
+aVmore eat
+p51
+atp52
+a(I28
+(lp53
+Vgo faster
+p54
+aVfaster go
+p55
+atp56
+a(I27
+(lp57
+Vseem more
+p58
+aVmore seem
+p59
+atp60
+a(I23
+(lp61
+Vread more
+p62
+aVmore read
+p63
+atp64
+a(I22
+(lp65
+Vrun faster
+p66
+aVfaster run
+p67
+atp68
+a(I22
+(lp69
+Vearn more
+p70
+aVmore earn
+p71
+atp72
+a(I22
+(lp73
+Vbecome better
+p74
+aVbetter become
+p75
+atp76
+a(I21
+(lp77
+Vbeat faster
+p78
+aVfaster beat
+p79
+atp80
+a(I20
+(lp81
+Vgrow faster
+p82
+aVfaster grow
+p83
+atp84
+a(I20
+(lp85
+Vadd more
+p86
+aVmore add
+p87
+atp88
+a(I19
+(lp89
+Vunderstand more
+p90
+aVmore understand
+p91
+atp92
+a(I18
+(lp93
+Vput more
+p94
+aVmore put
+p95
+atp96
+a(I18
+(lp97
+Vmove farther
+p98
+aVfarther move
+p99
+atp100
+a(I17
+(lp101
+Vweigh more
+p102
+aVmore weigh
+p103
+atp104
+a(I17
+(lp105
+Vreceive more
+p106
+aVmore receive
+p107
+atp108
+a(I15
+(lp109
+Vdepend more
+p110
+aVmore depend
+p111
+atp112
+a(I14
+(lp113
+Vmove closer
+p114
+aVcloser move
+p115
+atp116
+a(I14
+(lp117
+Vgo further
+p118
+aVfurther go
+p119
+atp120
+a(I14
+(lp121
+Veat less
+p122
+aVless eat
+p123
+atp124
+a(I13
+(lp125
+Vshow more
+p126
+aVmore show
+p127
+atp128
+a(I13
+(lp129
+Vsell more
+p130
+aVmore sell
+p131
+atp132
+a(I13
+(lp133
+Vhold more
+p134
+aVmore hold
+p135
+atp136
+a(I13
+(lp137
+Vgain more
+p138
+aVmore gain
+p139
+atp140
+a(I12
+(lp141
+Vtell more
+p142
+aVmore tell
+p143
+atp144
+a(I12
+(lp145
+Vrely more
+p146
+aVmore rely
+p147
+atp148
+a(I12
+(lp149
+Vbring more
+p150
+aVmore bring
+p151
+atp152
+a(I12
+(lp153
+Vappear more
+p154
+aVmore appear
+p155
+atp156
+a(I11
+(lp157
+Vspeak more
+p158
+aVmore speak
+p159
+atp160
+a(I11
+(lp161
+Vgo farther
+p162
+aVfarther go
+p163
+atp164
+a(I11
+(lp165
+Vcreate more
+p166
+aVmore create
+p167
+atp168
+a(I10
+(lp169
+Vyield more
+p170
+aVmore yield
+p171
+atp172
+a(I10
+(lp173
+Vmake less
+p174
+aVless make
+p175
+atp176
+a(I10
+(lp177
+Vfeel less
+p178
+aVless feel
+p179
+atp180
+a(I10
+(lp181
+Vbe closer
+p182
+aVcloser be
+p183
+atp184
+a(I9
+(lp185
+Vtravel farther
+p186
+aVfarther travel
+p187
+atp188
+a(I9
+(lp189
+Vfall faster
+p190
+aVfaster fall
+p191
+atp192
+a(I9
+(lp193
+Vbe harder
+p194
+aVharder be
+p195
+atp196
+a(I8
+(lp197
+Vwrite more
+p198
+aVmore write
+p199
+atp200
+a(I8
+(lp201
+Vwork faster
+p202
+aVfaster work
+p203
+atp204
+a(I8
+(lp205
+Vvibrate faster
+p206
+aVfaster vibrate
+p207
+atp208
+a(I8
+(lp209
+Vrise more
+p210
+aVmore rise
+p211
+atp212
+a(I8
+(lp213
+Voccur more
+p214
+aVmore occur
+p215
+atp216
+a(I8
+(lp217
+Vlook brighter
+p218
+aVbrighter look
+p219
+atp220
+a(I8
+(lp221
+Vform more
+p222
+aVmore form
+p223
+atp224
+a(I8
+(lp225
+Vcarry more
+p226
+aVmore carry
+p227
+atp228
+a(I8
+(lp229
+Vbe farther
+p230
+aVfarther be
+p231
+atp232
+a(I7
+(lp233
+Vwin more
+p234
+aVmore win
+p235
+atp236
+a(I7
+(lp237
+Vtravel faster
+p238
+aVfaster travel
+p239
+atp240
+a(I7
+(lp241
+Vseem closer
+p242
+aVcloser seem
+p243
+atp244
+a(I7
+(lp245
+Vpresent more
+p246
+aVmore present
+p247
+atp248
+a(I7
+(lp249
+Vinvolve more
+p250
+aVmore involve
+p251
+atp252
+a(I7
+(lp253
+Vinclude more
+p254
+aVmore include
+p255
+atp256
+a(I7
+(lp257
+Vdevelop more
+p258
+aVmore develop
+p259
+atp260
+a(I7
+(lp261
+Vcause more
+p262
+aVmore cause
+p263
+atp264
+a(I7
+(lp265
+Vask more
+p266
+aVmore ask
+p267
+atp268
+a(I6
+(lp269
+Vsave more
+p270
+aVmore save
+p271
+atp272
+a(I6
+(lp273
+Vhear more
+p274
+aVmore hear
+p275
+atp276
+a(I6
+(lp277
+Vcome more
+p278
+aVmore come
+p279
+atp280
+a(I6
+(lp281
+Vbreathe faster
+p282
+aVfaster breathe
+p283
+atp284
+a(I6
+(lp285
+Vacquire more
+p286
+aVmore acquire
+p287
+atp288
+a(I5
+(lp289
+Vwalk faster
+p290
+aVfaster walk
+p291
+atp292
+a(I5
+(lp293
+Vturn more
+p294
+aVmore turn
+p295
+atp296
+a(I5
+(lp297
+Vturn faster
+p298
+aVfaster turn
+p299
+atp300
+a(I5
+(lp301
+Vtry harder
+p302
+aVharder try
+p303
+atp304
+a(I5
+(lp305
+Vswim faster
+p306
+aVfaster swim
+p307
+atp308
+a(I5
+(lp309
+Vbeat more
+p310
+aVmore beat
+p311
+atp312
+a(I5
+(lp313
+Vbe faster
+p314
+aVfaster be
+p315
+atp316
+a(I5
+(lp317
+Vabsorb more
+p318
+aVmore absorb
+p319
+atp320
+a(I4
+(lp321
+Vsee farther
+p322
+aVfarther see
+p323
+atp324
+a(I4
+(lp325
+Vretain more
+p326
+aVmore retain
+p327
+atp328
+a(I4
+(lp329
+Vmeet more
+p330
+aVmore meet
+p331
+atp332
+a(I4
+(lp333
+Vmean more
+p334
+aVmore mean
+p335
+atp336
+a(I4
+(lp337
+Vimport more
+p338
+aVmore import
+p339
+atp340
+a(I4
+(lp341
+Vgo higher
+p342
+aVhigher go
+p343
+atp344
+a(I4
+(lp345
+Vgo deeper
+p346
+aVdeeper go
+p347
+atp348
+a(I4
+(lp349
+Vfunction more
+p350
+aVmore function
+p351
+atp352
+a(I4
+(lp353
+Vfunction better
+p354
+aVbetter function
+p355
+atp356
+a(I4
+(lp357
+Vforecast more
+p358
+aVmore forecast
+p359
+atp360
+a(I4
+(lp361
+Vfocus more
+p362
+aVmore focus
+p363
+atp364
+a(I4
+(lp365
+Vdry faster
+p366
+aVfaster dry
+p367
+atp368
+a(I4
+(lp369
+Vdraw more
+p370
+aVmore draw
+p371
+atp372
+a(I4
+(lp373
+Vcommunicate better
+p374
+aVbetter communicate
+p375
+atp376
+a(I4
+(lp377
+Vburn more
+p378
+aVmore burn
+p379
+atp380
+a(I4
+(lp381
+Vbuild more
+p382
+aVmore build
+p383
+atp384
+a(I4
+(lp385
+Vbecome longer
+p386
+aVlonger become
+p387
+atp388
+a(I4
+(lp389
+Vattract more
+p390
+aVmore attract
+p391
+atp392
+a(I4
+(lp393
+Vassume more
+p394
+aVmore assume
+p395
+atp396
+a(I3
+(lp397
+Vweigh less
+p398
+aVless weigh
+p399
+atp400
+a(I3
+(lp401
+Vvibrate more
+p402
+aVmore vibrate
+p403
+atp404
+a(I3
+(lp405
+Vsurvive more
+p406
+aVmore survive
+p407
+atp408
+a(I3
+(lp409
+Vsubstitute more
+p410
+aVmore substitute
+p411
+atp412
+a(I3
+(lp413
+Vspin faster
+p414
+aVfaster spin
+p415
+atp416
+a(I3
+(lp417
+Vshoot more
+p418
+aVmore shoot
+p419
+atp420
+a(I3
+(lp421
+Vsettle faster
+p422
+aVfaster settle
+p423
+atp424
+a(I3
+(lp425
+Vsend more
+p426
+aVmore send
+p427
+atp428
+a(I3
+(lp429
+Vrely less
+p430
+aVless rely
+p431
+atp432
+a(I3
+(lp433
+Vre more
+p434
+aVmore re
+p435
+atp436
+a(I3
+(lp437
+Vprove more
+p438
+aVmore prove
+p439
+atp440
+a(I3
+(lp441
+Vpass more
+p442
+aVmore pass
+p443
+atp444
+a(I3
+(lp445
+Vparticipate more
+p446
+aVmore participate
+p447
+atp448
+a(I3
+(lp449
+Vhandle more
+p450
+aVmore handle
+p451
+atp452
+a(I3
+(lp453
+Vget farther
+p454
+aVfarther get
+p455
+atp456
+a(I3
+(lp457
+Vexamine more
+p458
+aVmore examine
+p459
+atp460
+a(I3
+(lp461
+Vdrive more
+p462
+aVmore drive
+p463
+atp464
+a(I3
+(lp465
+Vconcentrate better
+p466
+aVbetter concentrate
+p467
+atp468
+a(I3
+(lp469
+Vchoose less
+p470
+aVless choose
+p471
+atp472
+a(I3
+(lp473
+Vbreathe more
+p474
+aVmore breathe
+p475
+atp476
+a(I3
+(lp477
+Vbe healthier
+p478
+aVhealthier be
+p479
+atp480
+a(I3
+(lp481
+Vaccelerate faster
+p482
+aVfaster accelerate
+p483
+atp484
+a(I2
+(lp485
+Vworry more
+p486
+aVmore worry
+p487
+atp488
+a(I2
+(lp489
+Vworry less
+p490
+aVless worry
+p491
+atp492
+a(I2
+(lp493
+Vwalk more
+p494
+aVmore walk
+p495
+atp496
+a(I2
+(lp497
+Vvote more
+p498
+aVmore vote
+p499
+atp500
+a(I2
+(lp501
+Vthink faster
+p502
+aVfaster think
+p503
+atp504
+a(I2
+(lp505
+Vsuppose further
+p506
+aVfurther suppose
+p507
+atp508
+a(I2
+(lp509
+Vsuffer more
+p510
+aVmore suffer
+p511
+atp512
+a(I2
+(lp513
+Vstop more
+p514
+aVmore stop
+p515
+atp516
+a(I2
+(lp517
+Vspeak louder
+p518
+aVlouder speak
+p519
+atp520
+a(I2
+(lp521
+Vreveal more
+p522
+aVmore reveal
+p523
+atp524
+a(I2
+(lp525
+Vread faster
+p526
+aVfaster read
+p527
+atp528
+a(I2
+(lp529
+Vreact more
+p530
+aVmore react
+p531
+atp532
+a(I2
+(lp533
+Vpromote more
+p534
+aVmore promote
+p535
+atp536
+a(I2
+(lp537
+Vprobe more
+p538
+aVmore probe
+p539
+atp540
+a(I2
+(lp541
+Vpound more
+p542
+aVmore pound
+p543
+atp544
+a(I2
+(lp545
+Vpass faster
+p546
+aVfaster pass
+p547
+atp548
+a(I2
+(lp549
+Voperate more
+p550
+aVmore operate
+p551
+atp552
+a(I2
+(lp553
+Vmelt more
+p554
+aVmore melt
+p555
+atp556
+a(I2
+(lp557
+Vlook farther
+p558
+aVfarther look
+p559
+atp560
+a(I2
+(lp561
+Vlisten more
+p562
+aVmore listen
+p563
+atp564
+a(I2
+(lp565
+Vinteract more
+p566
+aVmore interact
+p567
+atp568
+a(I2
+(lp569
+Vincrease more
+p570
+aVmore increase
+p571
+atp572
+a(I2
+(lp573
+Vhouse more
+p574
+aVmore house
+p575
+atp576
+a(I2
+(lp577
+Vheal faster
+p578
+aVfaster heal
+p579
+atp580
+a(I2
+(lp581
+Vgo lower
+p582
+aVlower go
+p583
+atp584
+a(I2
+(lp585
+Vgive faster
+p586
+aVfaster give
+p587
+atp588
+a(I2
+(lp589
+Vexport more
+p590
+aVmore export
+p591
+atp592
+a(I2
+(lp593
+Vexplore more
+p594
+aVmore explore
+p595
+atp596
+a(I2
+(lp597
+Vencourage more
+p598
+aVmore encourage
+p599
+atp600
+a(I2
+(lp601
+Vdesire more
+p602
+aVmore desire
+p603
+atp604
+a(I2
+(lp605
+Vdesign more
+p606
+aVmore design
+p607
+atp608
+a(I2
+(lp609
+Vboil faster
+p610
+aVfaster boil
+p611
+atp612
+a(I2
+(lp613
+Vbecome denser
+p614
+aVdenser become
+p615
+atp616
+a(I2
+(lp617
+Vbe louder
+p618
+aVlouder be
+p619
+atp620
+a(I2
+(lp621
+Vbe flatter
+p622
+aVflatter be
+p623
+atp624
+a(I2
+(lp625
+Vbe denser
+p626
+aVdenser be
+p627
+atp628
+a(I2
+(lp629
+Vbe brighter
+p630
+aVbrighter be
+p631
+atp632
+a(I2
+(lp633
+Vadvance more
+p634
+aVmore advance
+p635
+atp636
+a(I2
+(lp637
+Vadopt more
+p638
+aVmore adopt
+p639
+atp640
+a(I2
+(lp641
+Vachieve more
+p642
+aVmore achieve
+p643
+atp644
+a(I1
+(lp645
+Vwithstand more
+p646
+aVmore withstand
+p647
+atp648
+a(I1
+(lp649
+Vtalk louder
+p650
+aVlouder talk
+p651
+atp652
+a(I1
+(lp653
+Vtake faster
+p654
+aVfaster take
+p655
+atp656
+a(I1
+(lp657
+Vsplit more
+p658
+aVmore split
+p659
+atp660
+a(I1
+(lp661
+Vsolve more
+p662
+aVmore solve
+p663
+atp664
+a(I1
+(lp665
+Vsink further
+p666
+aVfurther sink
+p667
+atp668
+a(I1
+(lp669
+Vsail faster
+p670
+aVfaster sail
+p671
+atp672
+a(I1
+(lp673
+Vrow faster
+p674
+aVfaster row
+p675
+atp676
+a(I1
+(lp677
+Vresume more
+p678
+aVmore resume
+p679
+atp680
+a(I1
+(lp681
+Vrest more
+p682
+aVmore rest
+p683
+atp684
+a(I1
+(lp685
+Vremove more
+p686
+aVmore remove
+p687
+atp688
+a(I1
+(lp689
+Vrecover faster
+p690
+aVfaster recover
+p691
+atp692
+a(I1
+(lp693
+Vre farther
+p694
+aVfarther re
+p695
+atp696
+a(I1
+(lp697
+Vpush closer
+p698
+aVcloser push
+p699
+atp700
+a(I1
+(lp701
+Vpump faster
+p702
+aVfaster pump
+p703
+atp704
+a(I1
+(lp705
+Vprocess more
+p706
+aVmore process
+p707
+atp708
+a(I1
+(lp709
+Vprevent later
+p710
+aVlater prevent
+p711
+atp712
+a(I1
+(lp713
+Voffer less
+p714
+aVless offer
+p715
+atp716
+a(I1
+(lp717
+Vmove higher
+p718
+aVhigher move
+p719
+atp720
+a(I1
+(lp721
+Vmarry sooner
+p722
+aVsooner marry
+p723
+atp724
+a(I1
+(lp725
+Vlose sooner
+p726
+aVsooner lose
+p727
+atp728
+a(I1
+(lp729
+Vlie better
+p730
+aVbetter lie
+p731
+atp732
+a(I1
+(lp733
+Vlet less
+p734
+aVless let
+p735
+atp736
+a(I1
+(lp737
+Vknow sooner
+p738
+aVsooner know
+p739
+atp740
+a(I1
+(lp741
+Vinvent more
+p742
+aVmore invent
+p743
+atp744
+a(I1
+(lp745
+Vinterrupt more
+p746
+aVmore interrupt
+p747
+atp748
+a(I1
+(lp749
+Vincrease faster
+p750
+aVfaster increase
+p751
+atp752
+a(I1
+(lp753
+Vheal better
+p754
+aVbetter heal
+p755
+atp756
+a(I1
+(lp757
+Vhappen more
+p758
+aVmore happen
+p759
+atp760
+a(I1
+(lp761
+Vgrind more
+p762
+aVmore grind
+p763
+atp764
+a(I1
+(lp765
+Vglide more
+p766
+aVmore glide
+p767
+atp768
+a(I1
+(lp769
+Vformulate more
+p770
+aVmore formulate
+p771
+atp772
+a(I1
+(lp773
+Vfollow more
+p774
+aVmore follow
+p775
+atp776
+a(I1
+(lp777
+Vevaporate more
+p778
+aVmore evaporate
+p779
+atp780
+a(I1
+(lp781
+Vengage more
+p782
+aVmore engage
+p783
+atp784
+a(I1
+(lp785
+Vdrift more
+p786
+aVmore drift
+p787
+atp788
+a(I1
+(lp789
+Vdisagree more
+p790
+aVmore disagree
+p791
+atp792
+a(I1
+(lp793
+Vdevise more
+p794
+aVmore devise
+p795
+atp796
+a(I1
+(lp797
+Vdevelop sooner
+p798
+aVsooner develop
+p799
+atp800
+a(I1
+(lp801
+Vdefine more
+p802
+aVmore define
+p803
+atp804
+a(I1
+(lp805
+Vdecide more
+p806
+aVmore decide
+p807
+atp808
+a(I1
+(lp809
+Vcut faster
+p810
+aVfaster cut
+p811
+atp812
+a(I1
+(lp813
+Vconsider more
+p814
+aVmore consider
+p815
+atp816
+a(I1
+(lp817
+Vconform more
+p818
+aVmore conform
+p819
+atp820
+a(I1
+(lp821
+Vconcentrate less
+p822
+aVless concentrate
+p823
+atp824
+a(I1
+(lp825
+Vcomply more
+p826
+aVmore comply
+p827
+atp828
+a(I1
+(lp829
+Vcompare more
+p830
+aVmore compare
+p831
+atp832
+a(I1
+(lp833
+Vcome earlier
+p834
+aVearlier come
+p835
+atp836
+a(I1
+(lp837
+Vclimb better
+p838
+aVbetter climb
+p839
+atp840
+a(I1
+(lp841
+Vburn sooner
+p842
+aVsooner burn
+p843
+atp844
+a(I1
+(lp845
+Vbreak more
+p846
+aVmore break
+p847
+atp848
+a(I1
+(lp849
+Vbegin more
+p850
+aVmore begin
+p851
+atp852
+a(I1
+(lp853
+Vbecome hotter
+p854
+aVhotter become
+p855
+atp856
+a(I1
+(lp857
+Vbeat less
+p858
+aVless beat
+p859
+atp860
+a(I1
+(lp861
+Vbear more
+p862
+aVmore bear
+p863
+atp864
+a(I1
+(lp865
+Vbe sooner
+p866
+aVsooner be
+p867
+atp868
+a(I1
+(lp869
+Vbe smarter
+p870
+aVsmarter be
+p871
+atp872
+a(I1
+(lp873
+Vbe deeper
+p874
+aVdeeper be
+p875
+atp876
+a(I1
+(lp877
+Vagree more
+p878
+aVmore agree
+p879
+atp880
+a.
