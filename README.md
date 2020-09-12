@@ -31,7 +31,7 @@ The first step is to load the corpus, extract a vocabulary of all the unique wor
 
 Initialize the corpus by running, "count.py init <corpus_path>", where <corpus_path> may be "TASA" if "TASA" is a directory inside the rsc folder, and it contains a text file named "TASA.txt". It's assumed that the corpus contains sentences separated by newline (\n) characters.
 
-Once you got your corpus together, run "bigram_gen.py TASA" to run model on the bigrams. This stage can take a good deal of time, so you likely want to set the job up and get on with other business. Change the value of the variable "sweep_idx" to run on different bigrams sets.
+Once you got your corpus processed, run "bigram_gen.py TASA" to run model on the bigrams. This stage can take a good deal of time, so you likely want to set the job up and get on with other business. Change the value of the variable "sweep_idx" to run on different bigrams sets.
 
 
 
