@@ -8,6 +8,9 @@ from plot_tools import *
 from progressbar import ProgressBar
 
 from matplotlib.colors import cnames
+import pandas as pd
+import seaborn as sns
+from pylab import rc 
 
 import pickle
 from copy import deepcopy
@@ -166,7 +169,7 @@ if __name__ == "__main__":
                 #echos[report].append(ANet.echo_frames)
         loadings_cond.append(loadings)
         for report in reports.keys():
-            reports[report] /= 1000.0
+            reports[report] /= niter
         results_by_cond[conds[i]] = np.array([s1, s2])/float(niter)
         reports_cond.append(reports)
     
@@ -224,19 +227,67 @@ if __name__ == "__main__":
         print (res[i][0] + ', '+ h)
         print (res[i][0] + ', '+s)
         print()
+                    
+#    rc('axes',linewidth=100)
 
+    if hparams["feedback"] == "stp":
+        up_left = np.array(frames_by_probeANDresp['the dog the dog'])[0][:17, :4]
+        up_right = np.array(frames_by_probeANDresp['the dog the dog'])[0][:17, 4:]
+    
+        activation = []
+        word       = []
+        slot       = []
+        n          = []
+        for i in range(len(up_left.T)):
+            activation += list(up_left[:, i])
+            word += [ANet.vocab[i]]*len(up_left)
+            slot += [1]*len(up_left)
+            n += [j for j in range(len(up_left))]
+    
+        for i in range(len(up_right.T)):
+            activation += list(up_right[:, i])
+            word += [ANet.vocab[i]]*len(up_right)
+            slot += [2]*len(up_right)
+            n += [j for j in range(len(up_right))]
+    
+    
+        df = pd.DataFrame({"Activation": activation, "Word": word, "Slot":slot, "Iteration":n})
+    
+        sns.set_theme(style="ticks")
+        palette = sns.color_palette("Set2")
+        plot = sns.relplot(data = df, x='Iteration', y='Activation', col="Slot", style="Word", kind="line", hue="Word", palette="dark", linewidth=4)
+        plot.set(ylim=(0,0.8))
 
+    
+        
+        bottom_left = np.array(frames_by_probeANDresp['dog the the cat'])[0][:17, :4]
+        bottom_right = np.array(frames_by_probeANDresp['dog the the cat'])[0][:17, 4:]
+    
+    
+        activation = []
+        word       = []
+        slot       = []
+        n          = []
+        for i in range(len(bottom_left.T)):
+            activation += list(bottom_left[:, i])
+            word += [ANet.vocab[i]]*len(bottom_left)
+            slot += [1]*len(bottom_left)
+            n += [j for j in range(len(bottom_left))]
+    
+        for i in range(len(bottom_right.T)):
+            activation += list(bottom_right[:, i])
+            word += [ANet.vocab[i]]*len(bottom_right)
+            slot += [2]*len(bottom_right)
+            n += [j for j in range(len(bottom_right))]
+    
+    
+        df = pd.DataFrame({"Activation": activation, "Word": word, "Slot":slot, "Iteration":n})
+    
+        sns.set_theme(style="ticks")
+        palette = sns.color_palette("rocket_r")
 
-
-
-
-
-
-
-
-
-
-
+        plot = sns.relplot(data = df, x='Iteration', y='Activation', col="Slot", style="Word", kind="line", hue="Word", palette="dark", linewidth=4)
+        plot.set(ylim=(0,0.8))
 
 
 
