@@ -34,7 +34,8 @@ class AssociativeNet(Model):
             self.MatMul = self.ImplicitMatMul_distributed
         if hparams["explicit"]:
             self.MatMul = self.ExplicitMatMul
-            self.W = np.zeros((self.K*self.N, self.K*self.N)) #will need the explicit matrix
+            if hparams['init_weights']:
+                self.W = np.zeros((self.K*self.N, self.K*self.N)) #will need the explicit matrix
 
         if hparams["feedback"] == "linear":
             print ("Linear associator")
@@ -89,31 +90,51 @@ class AssociativeNet(Model):
         K = self.K 
         V = len(self.vocab)
 
-        self.WEIGHTS     = []
-        self.WEIGHTS_IDX = []
-        for p in range(K):
-            weights_p = []
-            weights_p_idx = []
-            for q in range(K):
-                W_pq = self.COUNTS[p*V:(p+1)*V, q*V:(q+1)*V]
-                for i in range(len(W_pq.data)):
-                    if W_pq.data[i] > 2:
-                        W_pq.data[i] = 1
-                    else:
-                        W_pq.data[i] = 0
-                W_pq.eliminate_zeros()
-                W_pq.data = W_pq.data/300.0
+        if self.hparams['explicit'] and not self.hparams['init_weights']:
+            self.W = lil_matrix(self.COUNTS.shape)
+            for p in range(K):
+                for q in range(K):
+                    W_pq = self.COUNTS[p*V:(p+1)*V, q*V:(q+1)*V]
+                    for i in range(len(W_pq.data)):
+                        if W_pq.data[i] > 2:
+                            W_pq.data[i] = 1
+                        else:
+                            W_pq.data[i] = 0
+                    W_pq.eliminate_zeros()
+                    W_pq.data = W_pq.data/300.0
+                    W_pq = W_pq.tolil()
+                    for i in range(V):
+                        for j in range(len(W_pq.rows[i])):
+                            self.W[p*V + i, q*V + W_pq.rows[i][j]] = W_pq.data[i][j]
+        else:
+            self.WEIGHTS     = []
+            self.WEIGHTS_IDX = []
+            for p in range(K):
+                weights_p = []
+                weights_p_idx = []
+                for q in range(K):
+                    W_pq = self.COUNTS[p*V:(p+1)*V, q*V:(q+1)*V]
+                    for i in range(len(W_pq.data)):
+                        if W_pq.data[i] > 2:
+                            W_pq.data[i] = 1
+                        else:
+                            W_pq.data[i] = 0
+                    W_pq.eliminate_zeros()
+                    W_pq.data = W_pq.data/300.0
 
-                weights_p.append(W_pq)
-                weights_p_idx.append(lil_matrix(W_pq).rows) #nonzero cell idxs for each row
-            self.WEIGHTS_IDX.append(weights_p_idx)
-            self.WEIGHTS.append(weights_p)
+                    weights_p.append(W_pq)
+                    weights_p_idx.append(lil_matrix(W_pq).rows) #nonzero cell idxs for each row
+                self.WEIGHTS_IDX.append(weights_p_idx)
+                self.WEIGHTS.append(weights_p)
 
     def save_nonzero(self):
         self.E_nnz = lil_matrix(self.E).rows
 
     def ExplicitMatMul(self, X, X0):
         return X.dot(self.W + np.outer(X0, X0))
+
+    def ExplicitMatMulSparse(self, X, X0):
+        return X.dot(self.W + X0.T.dot(X0) )
 
 
     def ImplicitMatMul_distributed(self, X, X0):

@@ -49,11 +49,14 @@ if __name__ == "__main__":
                "feedback":"stp",
                "gpu":False,
                 "localist":True,
+                "init_weights":False,
                 "distributed":False,
                 "explicit":False}
     ANet = AssociativeNet(hparams)
 
     MODE = sys.argv[1]
+
+    root_mem_path = "/home/ubuntu/LTM/DEN1_GeneralizationAtRetrieval/rsc"
 
 
     if MODE == "init":
@@ -64,7 +67,7 @@ if __name__ == "__main__":
         print ("Initializing...")
 
         ###load corpus
-        f = open("../rsc/{}/{}.txt".format(memory_path, memory_path), "r")
+        f = open(root_mem_path + "/{}/{}.txt".format(memory_path, memory_path), "r")
         corpus = f.readlines()
         f.close()
         corpus = corpus
@@ -81,7 +84,7 @@ if __name__ == "__main__":
 #        for i in range(len(ANet.E)):
 #            ANet.E[i] = ANet.E[i]/np.linalg.norm(ANet.E[i])
 #        np.savez("E{}".format(N), ANet.E)
-        f = open("../rsc/{}/vocab.txt".format(memory_path), "w")
+        f = open(root_mem_path + "/{}/vocab.txt".format(memory_path), "w")
         f.write("\n".join(ANet.vocab))
         f.close()
 
@@ -91,14 +94,14 @@ if __name__ == "__main__":
         CHU = int(sys.argv[3])
         memory_path = sys.argv[4] #where to dump the Counts
 
-        f = open("../rsc/{}/vocab.txt".format(memory_path), "r")
+        f = open(root_mem_path + "/{}/vocab.txt".format(memory_path), "r")
         vocab = f.readlines()
         f.close()
         vocab = [vocab[i].strip() for i in range(len(vocab))]
         I = {vocab[i]:i for i in range(len(vocab))}
         V = len(vocab)
 
-        f = open("../rsc/{}/{}.txt".format(memory_path, memory_path), "r")
+        f = open(root_mem_path + "/{}/{}.txt".format(memory_path, memory_path), "r")
         corpus = f.readlines()
         f.close()
         L = len(corpus)/CHU
@@ -116,7 +119,7 @@ if __name__ == "__main__":
 
         print("Computing bi-gram counts...")
 #        C = np.zeros((K*V, K*V))
-        C = csr_matrix((K*V, K*V))
+        C = lil_matrix((K*V, K*V), dtype=np.int64)
         pbar = ProgressBar(maxval=K**2).start()
         for k in range(K):
             for l in range(K):
@@ -124,7 +127,11 @@ if __name__ == "__main__":
                 idx = c.keys()
 #                C[k*V:(k+1)*V, l*V:(l+1)*V] = np.array(coo_matrix( (map( lambda i : c[i], idx) , 
 #                                                                       zip(*idx)), shape = (V, V)).todense())
-                C[int(k*V):int((k+1)*V),int( l*V ):int((l+1)*V) ] = coo_matrix( (list( map( lambda i : c[i], idx) ), list(zip(*idx)) ), shape = (V, V)).tocsr() 
+                Ckl = coo_matrix( (list( map( lambda i : c[i], idx) ), list(zip(*idx)) ), shape = (V, V)).tolil()
+                #C[int(k*V):int((k+1)*V),int( l*V ):int((l+1)*V) ] = Ckl.tocsr() 
+                for i in range(V):
+                    for j in range(len(Ckl.rows[i])):
+                        C[int(k*V)+i, int(l*V) + Ckl.rows[i][j]] = Ckl.data[i][j]
 
 
 
@@ -140,7 +147,7 @@ if __name__ == "__main__":
         #np.savez("C", C)
         save_csr(csr_matrix(C), "C_{}_{}".format(IDX, CHU))
 
-        os.system("mv C_* ../rsc/{}/".format(memory_path))
+        os.system("mv C_* {}/{}/".format(root_mem_path, memory_path))
 
 
 

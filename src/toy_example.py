@@ -50,6 +50,7 @@ if __name__ == "__main__":
                "N":N,
                "localist":True,
                "distributed":False,
+               "init_weights":True,
                "explicit":True,
                "idx_predict":1,
                "numBanks":K, 

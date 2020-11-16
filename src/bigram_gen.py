@@ -29,7 +29,7 @@ def proj(a, v):
 
 if __name__ == "__main__":
 
-    N =16360##2**14
+    N =52046#16360##2**14
 
     K = 2
 
@@ -47,17 +47,22 @@ if __name__ == "__main__":
                "C":1,
                "mode":"numpy",
                "feedback":"stp",
+               "init_weights":False,
                "gpu":False,
                "localist":True,
                "distributed":False,
-               "explicit":False}
+               "explicit":True}
     ANet = AssociativeNet(hparams)
 
     memory_path = sys.argv[1]
 
+
+
     NSamples = 150
 
-    f = open("../rsc/{}/vocab.txt".format(memory_path), "r")
+    root_mem_path = "/home/ubuntu/LTM/DEN1_GeneralizationAtRetrieval/rsc"
+
+    f = open(root_mem_path + "/{}/vocab.txt".format(memory_path), "r")
     vocab = f.readlines()
     ANet.vocab = [vocab[i].strip() for i in range(len(vocab))]
     f.close()
@@ -74,14 +79,15 @@ if __name__ == "__main__":
     nchunk = 1
     print ("merging chunks")
     V = len(vocab)
-    C = load_csr("../rsc/{}/C_{}_{}".format(memory_path, 0, totalChunks), (V*K, V*K)) #pre-computed
+    C = load_csr(root_mem_path + "/{}/C_{}_{}".format(memory_path, 0, totalChunks),  (V*K, V*K), dtype=np.int64) #pre-computed
     for IDX in range(1, nchunk):
-        C[:, :] += load_csr("../rsc/{}/C_{}_{}".format(memory_path, IDX, totalChunks), (V*K, V*K))
+        C[:, :] += load_csr(root_mem_path + "/{}/C_{}_{}".format(memory_path, IDX, totalChunks), (V*K, V*K), dtype=np.int64)
 
 #    C -= np.diag(np.array(C.diagonal()).flatten())
 
     ANet.COUNTS = csr_matrix(C)
     del C
+    print("Crunching out the weights...")
     ANet.compute_weights()
     ANet.nullvec = np.zeros((K*N))
 
