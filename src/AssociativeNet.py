@@ -91,16 +91,18 @@ class AssociativeNet(Model):
         V = len(self.vocab)
 
         if self.hparams['explicit'] and not self.hparams['init_weights']:
-            self.W = lil_matrix(self.COUNTS.shape)
+            self.W = np.zeros(self.COUNTS.shape)#lil_matrix(self.COUNTS.shape)
             for p in range(K):
                 for q in range(K):
                     W_pq = self.COUNTS[p*V:(p+1)*V, q*V:(q+1)*V]
+
                     for i in range(len(W_pq.data)):
                         if W_pq.data[i] > 2:
                             W_pq.data[i] = 1
                         else:
                             W_pq.data[i] = 0
                     W_pq.eliminate_zeros()
+                    print(W_pq.nnz)
                     W_pq.data = W_pq.data/300.0
                     W_pq = W_pq.tolil()
                     for i in range(V):
@@ -285,6 +287,7 @@ class AssociativeNet(Model):
             x_new = x_new/norm(x_new)
 #            energy.append(-0.5*self.echo_full.T.dot(self.W).dot(self.echo_full))
             diff =  norm(self.echo_full - x_new)
+            print(diff, count)
 
  #           print "-"*32
  #           self.view_banks(5)
@@ -351,7 +354,7 @@ class AssociativeNet(Model):
             X_o = X_o/norm(X_o)
         self.W += st*np.outer(X_o, X_o)
 
-    def probe(self, sentence, st = 1.0, toNorm = True, noise = 0):
+    def probe(self, sentence, st = 1.0, toNorm = True, noise = 0, verbose=False):
         X_order = self.sent2vec(sentence.split())
         X_order = st*X_order + np.random.normal(0, noise, self.N*self.K)
         if toNorm:
