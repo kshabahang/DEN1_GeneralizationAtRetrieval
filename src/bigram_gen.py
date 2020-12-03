@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
     N =16360#2**16
 
-    K = 2
+    K = 3#2
 
     
     hparams = {"bank_labels":["t-{}".format(i) for i in range(K)],
@@ -140,20 +140,28 @@ if __name__ == "__main__":
         
         if toLesion:
             #lesion
-            a2b = deepcopy(ANet.WEIGHTS[0][1][ANet.I[w1_c],ANet.I[w2_c]]) ###lesion both ways
-            b2a = deepcopy(ANet.WEIGHTS[1][0][ANet.I[w2_c],ANet.I[w1_c]])
-            ANet.WEIGHTS[0][1][ANet.I[w1_c],ANet.I[w2_c]] = 0
-            ANet.WEIGHTS[1][0][ANet.I[w2_c],ANet.I[w1_c]] = 0
+            if ANet.hparams['explicit']:
+                a2b = deepcopy(ANet.W[ANet.I[w1_c],ANet.N + ANet.I[w2_c]])
+                b2a = deepcopy(ANet.W[ANet.N + ANet.I[w2_c],ANet.I[w1_c]])
+                ANet.W[ANet.I[w1_c],ANet.N + ANet.I[w2_c]] = 0
+                ANet.W[ANet.N + ANet.I[w2_c],ANet.I[w1_c]] = 0
+                assert(ANet.W[ANet.I[w1_c],ANet.N + ANet.I[w2_c]] == 0)
+                assert(ANet.W[ANet.N + ANet.I[w2_c],ANet.I[w1_c]] == 0)
+            else:
+                a2b = deepcopy(ANet.WEIGHTS[0][1][ANet.I[w1_c],ANet.I[w2_c]]) ###lesion both ways
+                b2a = deepcopy(ANet.WEIGHTS[1][0][ANet.I[w2_c],ANet.I[w1_c]])
+                ANet.WEIGHTS[0][1][ANet.I[w1_c],ANet.I[w2_c]] = 0
+                ANet.WEIGHTS[1][0][ANet.I[w2_c],ANet.I[w1_c]] = 0
     
-            assert(ANet.WEIGHTS[0][1][ANet.I[w1_c], ANet.I[w2_c]] == 0) 
-            assert(ANet.WEIGHTS[1][0][ANet.I[w2_c], ANet.I[w1_c]] == 0)
+                assert(ANet.WEIGHTS[0][1][ANet.I[w1_c], ANet.I[w2_c]] == 0) 
+                assert(ANet.WEIGHTS[1][0][ANet.I[w2_c], ANet.I[w1_c]] == 0)
     
         for i in range(len(probes)):
             probe = probes[i]
     
             ANet.probe(probe)
     
-            terminal = ' '.join([ANet.banks[bank_lbls[j]][0][0] for j in xrange(len(bank_lbls))])
+            terminal = ' '.join([ANet.banks[bank_lbls[j]][0][0] for j in range(len(bank_lbls))])
             change = round(np.linalg.norm(ANet.frames[0] - ANet.frames[-1]), 3)
             cycles = len(ANet.frames)
     
@@ -177,10 +185,12 @@ if __name__ == "__main__":
     
         if toLesion: 
             #reset
-            ANet.WEIGHTS[0][1][ANet.I[w1_c],ANet.I[w2_c]] = deepcopy(a2b)
-            ANet.WEIGHTS[1][0][ANet.I[w2_c],ANet.I[w1_c]] = deepcopy(b2a)
-            #assert(ANet.WEIGHTS[0][1][ANet.I[w1_c], ANet.I[w2_c]] != 0) 
-            #assert(ANet.WEIGHTS[1][0][ANet.I[w2_c], ANet.I[w1_c]] != 0)
+            if ANet.hparams['explicit']:
+                ANet.W[ANet.I[w1_c],ANet.N + ANet.I[w2_c]] = deepcopy(a2b)
+                ANet.W[ANet.N + ANet.I[w2_c],ANet.I[w1_c]] = deepcopy(b2a)
+            else:
+                ANet.WEIGHTS[0][1][ANet.I[w1_c],ANet.I[w2_c]] = deepcopy(a2b)
+                ANet.WEIGHTS[1][0][ANet.I[w2_c],ANet.I[w1_c]] = deepcopy(b2a)
 
 
     if toLesion:

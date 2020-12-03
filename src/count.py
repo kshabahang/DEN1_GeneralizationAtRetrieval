@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
     N =16360#2**16
 
-    K = 2
+    K = 3
 
     
     hparams = {"bank_labels":["t-{}".format(i) for i in range(K)],
