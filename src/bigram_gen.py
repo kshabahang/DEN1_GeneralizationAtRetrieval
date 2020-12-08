@@ -56,8 +56,8 @@ if __name__ == "__main__":
 
     memory_path = sys.argv[1]
 
-    sweep_idx_i = int(sys.argv[2])
-    sweep_idx_j = int(sys.argv[3])
+#    sweep_idx_i = int(sys.argv[2])
+#    sweep_idx_j = int(sys.argv[3])
 
 
 
@@ -97,110 +97,115 @@ if __name__ == "__main__":
 
     if ANet.hparams["gpu"]:
         ANet.nullvec = ANet.nullvec.cuda()
- 
+    
+    toLesion = True
 
 #    pairs = "VB_RBR_2_RBR_VB PPRS_NN_2_PPR_NN IN_VBG_2_IN_VBP NNS_VBP_2_NN_VBP NN_VBZ_2_NN_VBP DT_NN_2_NN_DT JJ_NN_2_NN_JJ NN_IN_2_IN_NN PPR_VBP_2_PPRS_VBP".split()
 
     grammatical = "VB_RBR PPRS_NN IN_VBG NNS_VBP NN_VBZ DT_NN JJ_NN NN_IN PPR_VBP".split()
     ungrammatical="RBR_VB PPR_NN IN_VBP NN_VBP NN_VBP NN_DT NN_JJ IN_NN PPRS_VBP".split()
 
-    #pair_set = pairs[sweep_idx]
-    pair_set = grammatical[sweep_idx_i] + "_2_" + ungrammatical[sweep_idx_j]
-    
+    for idx_gram in range(len(grammatical)):
+        for idx_ugram in range(len(ungrammatical)):
+
+            #pair_set = pairs[sweep_idx]
+            #pair_set = grammatical[sweep_idx_i] + "_2_" + ungrammatical[sweep_idx_j]
+            pair_set = grammatical[idx_gram] + "_2_" + ungrammatical[idx_ugram]
+            
 
 
-    print (pair_set)
-    
-    f = open("../rsc/bigrams/"+pair_set + ".pkl", "rb")
-    pair_items = pickle.load(f)
-    f.close()
+            print (pair_set)
+            
+            f = open("../rsc/bigrams/"+pair_set + ".pkl", "rb")
+            pair_items = pickle.load(f)
+            f.close()
 
 
-    scores = {"correct":{}, "incorrect":{}}
-
-    toLesion = True
-
-    for k in range(len(pair_items[:NSamples])):
-        (frq, [correct, incorrect]) = pair_items[k]
+            scores = {"correct":{}, "incorrect":{}}
 
 
-        
-        print (frq, correct, incorrect)
-    
-        bank_lbls = ['t-0', 't-1']
-      
-    
-        labels = ["correct", "incorrect"]
-        probes = [correct, incorrect]
-    
-        [w1_c, w2_c] = correct.split()
-        [w1_i, w2_i] = incorrect.split()
-    
-    
-        
-        if toLesion:
-            #lesion
-            if ANet.hparams['explicit']:
-                a2b = deepcopy(ANet.W[ANet.I[w1_c],ANet.N + ANet.I[w2_c]])
-                b2a = deepcopy(ANet.W[ANet.N + ANet.I[w2_c],ANet.I[w1_c]])
-                ANet.W[ANet.I[w1_c],ANet.N + ANet.I[w2_c]] = 0
-                ANet.W[ANet.N + ANet.I[w2_c],ANet.I[w1_c]] = 0
-                assert(ANet.W[ANet.I[w1_c],ANet.N + ANet.I[w2_c]] == 0)
-                assert(ANet.W[ANet.N + ANet.I[w2_c],ANet.I[w1_c]] == 0)
+
+            for k in range(len(pair_items[:NSamples])):
+                (frq, [correct, incorrect]) = pair_items[k]
+
+
+                
+                print (frq, correct, incorrect)
+            
+                bank_lbls = ['t-0', 't-1']
+              
+            
+                labels = ["correct", "incorrect"]
+                probes = [correct, incorrect]
+            
+                [w1_c, w2_c] = correct.split()
+                [w1_i, w2_i] = incorrect.split()
+            
+            
+                
+                if toLesion:
+                    #lesion
+                    if ANet.hparams['explicit']:
+                        a2b = deepcopy(ANet.W[ANet.I[w1_c],ANet.N + ANet.I[w2_c]])
+                        b2a = deepcopy(ANet.W[ANet.N + ANet.I[w2_c],ANet.I[w1_c]])
+                        ANet.W[ANet.I[w1_c],ANet.N + ANet.I[w2_c]] = 0
+                        ANet.W[ANet.N + ANet.I[w2_c],ANet.I[w1_c]] = 0
+                        assert(ANet.W[ANet.I[w1_c],ANet.N + ANet.I[w2_c]] == 0)
+                        assert(ANet.W[ANet.N + ANet.I[w2_c],ANet.I[w1_c]] == 0)
+                    else:
+                        a2b = deepcopy(ANet.WEIGHTS[0][1][ANet.I[w1_c],ANet.I[w2_c]]) ###lesion both ways
+                        b2a = deepcopy(ANet.WEIGHTS[1][0][ANet.I[w2_c],ANet.I[w1_c]])
+                        ANet.WEIGHTS[0][1][ANet.I[w1_c],ANet.I[w2_c]] = 0
+                        ANet.WEIGHTS[1][0][ANet.I[w2_c],ANet.I[w1_c]] = 0
+            
+                        assert(ANet.WEIGHTS[0][1][ANet.I[w1_c], ANet.I[w2_c]] == 0) 
+                        assert(ANet.WEIGHTS[1][0][ANet.I[w2_c], ANet.I[w1_c]] == 0)
+            
+                for i in range(len(probes)):
+                    probe = probes[i]
+            
+                    ANet.probe(probe)
+            
+                    terminal = ' '.join([ANet.banks[bank_lbls[j]][0][0] for j in range(len(bank_lbls))])
+                    change = round(np.linalg.norm(ANet.frames[0] - ANet.frames[-1]), 3)
+                    cycles = len(ANet.frames)
+            
+                    if "vlens" not in scores[labels[i]]:
+                        scores[labels[i]]["vlens"] = [ANet.vlens]
+                        scores[labels[i]]["ncycles"] = [len(ANet.frames)]
+                        scores[labels[i]]["change"] = [change]
+                        scores[labels[i]]["terminal"] = [terminal]
+                        scores[labels[i]]["probe"] = [probe]
+                        scores[labels[i]]["freq"] = [frq]
+                        scores[labels[i]]["frames"] = [ANet.frames]
+                    else:
+                        scores[labels[i]]["vlens"].append(ANet.vlens)
+                        scores[labels[i]]["ncycles"].append(len(ANet.frames))
+                        scores[labels[i]]["change"].append(change)
+                        scores[labels[i]]["terminal"].append(terminal)
+                        scores[labels[i]]["probe"].append(probe)                
+                        scores[labels[i]]["freq"].append(frq)
+                        scores[labels[i]]["frames"].append(ANet.frames)
+            
+            
+                if toLesion: 
+                    #reset
+                    if ANet.hparams['explicit']:
+                        ANet.W[ANet.I[w1_c],ANet.N + ANet.I[w2_c]] = deepcopy(a2b)
+                        ANet.W[ANet.N + ANet.I[w2_c],ANet.I[w1_c]] = deepcopy(b2a)
+                    else:
+                        ANet.WEIGHTS[0][1][ANet.I[w1_c],ANet.I[w2_c]] = deepcopy(a2b)
+                        ANet.WEIGHTS[1][0][ANet.I[w2_c],ANet.I[w1_c]] = deepcopy(b2a)
+
+
+            if toLesion:
+                print( "Lesioned")
             else:
-                a2b = deepcopy(ANet.WEIGHTS[0][1][ANet.I[w1_c],ANet.I[w2_c]]) ###lesion both ways
-                b2a = deepcopy(ANet.WEIGHTS[1][0][ANet.I[w2_c],ANet.I[w1_c]])
-                ANet.WEIGHTS[0][1][ANet.I[w1_c],ANet.I[w2_c]] = 0
-                ANet.WEIGHTS[1][0][ANet.I[w2_c],ANet.I[w1_c]] = 0
-    
-                assert(ANet.WEIGHTS[0][1][ANet.I[w1_c], ANet.I[w2_c]] == 0) 
-                assert(ANet.WEIGHTS[1][0][ANet.I[w2_c], ANet.I[w1_c]] == 0)
-    
-        for i in range(len(probes)):
-            probe = probes[i]
-    
-            ANet.probe(probe)
-    
-            terminal = ' '.join([ANet.banks[bank_lbls[j]][0][0] for j in range(len(bank_lbls))])
-            change = round(np.linalg.norm(ANet.frames[0] - ANet.frames[-1]), 3)
-            cycles = len(ANet.frames)
-    
-            if "vlens" not in scores[labels[i]]:
-                scores[labels[i]]["vlens"] = [ANet.vlens]
-                scores[labels[i]]["ncycles"] = [len(ANet.frames)]
-                scores[labels[i]]["change"] = [change]
-                scores[labels[i]]["terminal"] = [terminal]
-                scores[labels[i]]["probe"] = [probe]
-                scores[labels[i]]["freq"] = [frq]
-                scores[labels[i]]["frames"] = [ANet.frames]
-            else:
-                scores[labels[i]]["vlens"].append(ANet.vlens)
-                scores[labels[i]]["ncycles"].append(len(ANet.frames))
-                scores[labels[i]]["change"].append(change)
-                scores[labels[i]]["terminal"].append(terminal)
-                scores[labels[i]]["probe"].append(probe)                
-                scores[labels[i]]["freq"].append(frq)
-                scores[labels[i]]["frames"].append(ANet.frames)
-    
-    
-        if toLesion: 
-            #reset
-            if ANet.hparams['explicit']:
-                ANet.W[ANet.I[w1_c],ANet.N + ANet.I[w2_c]] = deepcopy(a2b)
-                ANet.W[ANet.N + ANet.I[w2_c],ANet.I[w1_c]] = deepcopy(b2a)
-            else:
-                ANet.WEIGHTS[0][1][ANet.I[w1_c],ANet.I[w2_c]] = deepcopy(a2b)
-                ANet.WEIGHTS[1][0][ANet.I[w2_c],ANet.I[w1_c]] = deepcopy(b2a)
+                print("Not lesioned")
 
-
-    if toLesion:
-        print( "Lesioned")
-    else:
-        print("Not lesioned")
-
-    f = open(pair_set + "_output.pkl", "wb")
-    pickle.dump(scores, f)
-    f.close()
+            f = open(pair_set + "_output.pkl", "wb")
+            pickle.dump(scores, f)
+            f.close()
 
 
 

@@ -133,7 +133,7 @@ class AssociativeNet(Model):
         self.E_nnz = lil_matrix(self.E).rows
 
     def ExplicitMatMul(self, X, X0):
-        return X.dot(self.W + np.outer(X0, X0))
+        return X.dot(self.W) #+ np.outer(X0, X0))
 
     def ExplicitMatMulSparse(self, X, X0):
         return X.dot(self.W + X0.T.dot(X0) )
@@ -263,6 +263,7 @@ class AssociativeNet(Model):
 
         ###compute the next state
         x0 = self.alpha*self.echo_full #for STP
+        self.W += np.outer(x0, x0)
         x_new = self.MatMul(self.echo_full, x0)
         vlens.append(np.linalg.norm(x_new))
         x_new = x_new/norm(x_new)
@@ -287,11 +288,13 @@ class AssociativeNet(Model):
             x_new = x_new/norm(x_new)
 #            energy.append(-0.5*self.echo_full.T.dot(self.W).dot(self.echo_full))
             diff =  norm(self.echo_full - x_new)
-            print(diff, count)
+#            print(diff, count)
 
  #           print "-"*32
  #           self.view_banks(5)
  #           print count, diff
+
+        self.W -= np.outer(x0, x0)
 
         self.echo_full = 1*x_new
         self.compute_sts() #compute strengths with updated buffer
