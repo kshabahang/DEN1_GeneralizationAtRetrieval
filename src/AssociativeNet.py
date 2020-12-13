@@ -4,6 +4,7 @@ from itertools import combinations, product
 #import cv2
 import numpy as np
 from scipy.linalg import hadamard, norm
+
 from scipy.sparse.linalg import eigs
 from scipy.sparse import lil_matrix, csr_matrix
 from copy import deepcopy
@@ -91,23 +92,53 @@ class AssociativeNet(Model):
         V = len(self.vocab)
 
         if self.hparams['explicit'] and not self.hparams['init_weights']:
-            self.W = np.zeros(self.COUNTS.shape)#lil_matrix(self.COUNTS.shape)
+            #self.W = np.zeros(self.COUNTS.shape)#
+            self.W = lil_matrix(self.COUNTS.shape)
+
             for p in range(K):
                 for q in range(K):
                     W_pq = self.COUNTS[p*V:(p+1)*V, q*V:(q+1)*V]
+                        
+                    binaryMat = True
+                    if binaryMat:
 
-                    for i in range(len(W_pq.data)):
-                        if W_pq.data[i] > 2:
-                            W_pq.data[i] = 1
-                        else:
-                            W_pq.data[i] = 0
-                    W_pq.eliminate_zeros()
-                    print(W_pq.nnz)
-                    W_pq.data = W_pq.data/300.0
-                    W_pq = W_pq.tolil()
-                    for i in range(V):
-                        for j in range(len(W_pq.rows[i])):
-                            self.W[p*V + i, q*V + W_pq.rows[i][j]] = W_pq.data[i][j]
+                        for i in range(len(W_pq.data)):
+                            if W_pq.data[i] > 2:
+                                W_pq.data[i] = 1
+                            else:
+                                W_pq.data[i] = 0
+                        W_pq.eliminate_zeros()
+                        print(W_pq.nnz)
+#                        W_pq.data = W_pq.data/650.0
+                        W_pq = W_pq.tolil()
+                        for i in range(V):
+                            for j in range(len(W_pq.rows[i])):
+                                self.W[p*V + i, q*V + W_pq.rows[i][j]] = W_pq.data[i][j]
+                    else:
+                        #experimental
+                        nnzs = W_pq.getnnz(axis=1)
+                        #for i in range(len(W_pq.data)):
+                        #    if W_pq.data[i] > 2:
+                        #        W_pq.data[i] = 1
+                        #    else:
+                        #        W_pq.data[i] = 0
+                        #W_pq.eliminate_zeros()
+                        print(W_pq.nnz)
+                        #W_pq.data = W_pq.data/650.0
+                        W_pq = W_pq.tolil()
+                        for i in range(V):
+                            for j in range(len(W_pq.rows[i])):
+                                self.W[p*V + i, q*V + W_pq.rows[i][j]] = float(np.log10(  (W_pq.data[i][j]  ) ) /(nnzs[i]*nnzs[j])  )
+
+
+            ei, ev = eigs(self.W, k =10)
+            self.ei = ei.real
+            self.ev = ev.real
+
+            self.W = self.W.tocsr()
+
+            self.W.data /= self.ei[0] + 0.1
+
         else:
             self.WEIGHTS     = []
             self.WEIGHTS_IDX = []
@@ -247,12 +278,12 @@ class AssociativeNet(Model):
         self.echo_frames = echo_frames
 
     def feedback_stp(self):
-
+        from scipy.sparse.linalg import norm as norm_sp
         ###compute strengths for the initial input pattern in buffer
         self.compute_sts()
         self.sort_banks()
-#        print "*"*72
-#        self.view_banks(5)
+
+        self.view_banks(5)
         frames=  [deepcopy(self.strengths)]
         echo_frames = [deepcopy(self.echo_full)]
 
@@ -260,53 +291,74 @@ class AssociativeNet(Model):
         energy = []
 #        energy= [-0.5*self.echo_full.T.dot(self.W).dot(self.echo_full)]
 
-
+        print("Adding STP")
         ###compute the next state
         x0 = self.alpha*self.echo_full #for STP
-        self.W += np.outer(x0, x0)
-        x_new = self.MatMul(self.echo_full, x0)
-        vlens.append(np.linalg.norm(x_new))
-        x_new = x_new/norm(x_new)
-        diff = norm(self.echo_full - x_new)
-        count = 0
+        nnz0 = np.where(x0 != 0)[0]
+        for ii in nnz0:
+            for jj in nnz0:
+                self.W[ii, jj] += x0[ii]*x0[jj]
+        #self.W += np.outer(x0, x0)
+        try:
+            x = csr_matrix(self.echo_full)
+            x_new = x.dot(self.W)#self.MatMul(self.echo_full, x0)
+            vlen = float(norm_sp(x_new)) 
+            vlens.append(vlen)
+            x_new = x_new/vlen
+            diff = float(norm_sp(x - x_new))
+            count = 0
 
-        while(diff > self.eps):
-            count += 1
-            ###load buffer with new state
-            self.echo_full = 1*x_new
-            self.compute_sts() #compute strengths with updated buffer
-            self.sort_banks()
-            frames.append(deepcopy(self.strengths))
-            echo_frames.append(deepcopy(self.echo_full))
+            while(diff > self.eps):
+                count += 1
+                ###load buffer with new state
+                x = 1*x_new
+                #self.compute_sts() #compute strengths with updated buffer
+                #self.sort_banks()
+#                frames.append(deepcopy(self.strengths))
+#                echo_frames.append(deepcopy(self.echo_full))
 
 
 
 
-            ###compute the next state
-            x_new = self.MatMul(self.echo_full, x0) 
-            vlens.append(np.linalg.norm(x_new))
-            x_new = x_new/norm(x_new)
-#            energy.append(-0.5*self.echo_full.T.dot(self.W).dot(self.echo_full))
-            diff =  norm(self.echo_full - x_new)
-#            print(diff, count)
+                ###compute the next state
+                x_new = x.dot(self.W)#self.echo_full.dot(self.W)#self.MatMul(self.echo_full, x0) 
+                vlen = float(norm_sp(x_new))
+                vlens.append(vlen)
 
- #           print "-"*32
- #           self.view_banks(5)
- #           print count, diff
+                x_new = x_new/vlen
+#                energy.append(-0.5*self.echo_full.T.dot(self.W).dot(self.echo_full))
+                diff =  float(norm_sp(x - x_new))
 
-        self.W -= np.outer(x0, x0)
 
-        self.echo_full = 1*x_new
+            for ii in nnz0:
+                for jj in nnz0:
+                    self.W[ii, jj] -= x0[ii]*x0[jj]
+                
+#                print(diff, count)
+
+ #               print "-"*32
+ #               self.view_banks(5)
+ #               print count, diff
+        except Exception as e:
+            print(e)
+            for ii in nnz0:
+                for jj in nnz0:
+                    self.W[ii, jj] -= x0[ii]*x0[jj]
+        #this way we always reset memory if we have to exit
+        #self.W -= np.outer(x0, x0)
+
+        self.echo_full = 1*np.array(x_new.todense())[0]
         self.compute_sts() #compute strengths with updated buffer
         self.sort_banks()
-        frames.append(deepcopy(self.strengths))
-        echo_frames.append(deepcopy(self.echo_full))
+#        frames.append(deepcopy(self.strengths))
+#        echo_frames.append(deepcopy(self.echo_full))
 #        energy.append(-0.5*self.echo_full.T.dot(self.W).dot(self.echo_full))
 
 
         self.frames = frames
         self.echo_frames = echo_frames
         self.vlens  = vlens
+        self.count = count
 
 
 

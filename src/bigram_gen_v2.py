@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
     N =16360#2**16
 
-    K = 3#2
+    K = 2
 
     
     hparams = {"bank_labels":["t-{}".format(i) for i in range(K)],
@@ -170,25 +170,25 @@ if __name__ == "__main__":
                             ANet.probe(probe)
                 
                             terminal = ' '.join([ANet.banks[bank_lbls[j]][0][0] for j in range(len(bank_lbls))])
-                            change = round(np.linalg.norm(ANet.frames[0] - ANet.frames[-1]), 3)
-                            cycles = len(ANet.frames)
+                            #change = round(np.linalg.norm(ANet.frames[0] - ANet.frames[-1]), 3)
+                            #cycles = len(ANet.frames)
                 
                             if "vlens" not in scores[labels[i]]:
                                 scores[labels[i]]["vlens"] = [ANet.vlens]
-                                scores[labels[i]]["ncycles"] = [len(ANet.frames)]
-                                scores[labels[i]]["change"] = [change]
-                                scores[labels[i]]["terminal"] = [terminal]
+                                scores[labels[i]]["ncycles"] = [ANet.count]
+                              #  scores[labels[i]]["change"] = [change]
+                              #  scores[labels[i]]["terminal"] = [terminal]
                                 scores[labels[i]]["probe"] = [probe]
                                 scores[labels[i]]["freq"] = [frq]
-                                scores[labels[i]]["frames"] = [ANet.frames]
+                              #  scores[labels[i]]["frames"] = [ANet.frames]
                             else:
                                 scores[labels[i]]["vlens"].append(ANet.vlens)
-                                scores[labels[i]]["ncycles"].append(len(ANet.frames))
-                                scores[labels[i]]["change"].append(change)
-                                scores[labels[i]]["terminal"].append(terminal)
+                                scores[labels[i]]["ncycles"].append(ANet.count)
+                               # scores[labels[i]]["change"].append(change)
+                               # scores[labels[i]]["terminal"].append(terminal)
                                 scores[labels[i]]["probe"].append(probe)                
                                 scores[labels[i]]["freq"].append(frq)
-                                scores[labels[i]]["frames"].append(ANet.frames)
+                              #  scores[labels[i]]["frames"].append(ANet.frames)
                 
                 
                         if toLesion: 
