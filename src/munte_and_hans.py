@@ -109,7 +109,7 @@ if __name__ == "__main__":
 
 
     
-    toLesion = True
+    toLesion = False#True
 
     if True:
 
@@ -217,13 +217,19 @@ if __name__ == "__main__":
 
             if toLesion:
                 print( "Lesioned")
+
+                f = open(root_mem_path + "/"+pair_set + "_output_munt_and_hans_lesioned.pkl", "wb")
+                pickle.dump(scores, f)
+                f.close()
+
+
             else:
                 print("Not lesioned")
 
-            f = open(root_mem_path + "/"+pair_set + "_output_munt_and_hans.pkl", "wb")
-            pickle.dump(scores, f)
-            f.close()
 
+                f = open(root_mem_path + "/"+pair_set + "_output_munt_and_hans_intact.pkl", "wb")
+                pickle.dump(scores, f)
+                f.close()
 
 
 

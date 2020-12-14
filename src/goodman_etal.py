@@ -164,7 +164,7 @@ if __name__ == "__main__":
 
     lists = [L1, L2]
 
-    N = 100
+    N = 1000
 
     grammatical = []
     ungrammatical = []

@@ -92,7 +92,7 @@ if __name__ == "__main__":
     ANet.COUNTS = csr_matrix(C)
     del C
     print("Crunching out the weights...")
-    ANet.compute_weights()
+    ANet.compute_weights(binaryMat=False)
     ANet.nullvec = np.zeros((K*N))
 
     if ANet.hparams["gpu"]:
@@ -100,7 +100,7 @@ if __name__ == "__main__":
     
     toLesion = True
 
-    if True: 
+    if False: 
 
         grammatical = "VB_RBR PPRS_NN IN_VBG NNS_VBP NN_VBZ DT_NN JJ_NN NN_IN PPR_VBP".split()
         ungrammatical="RBR_VB PPR_NN IN_VBP NN_VBP NN_VBP NN_DT NN_JJ IN_NN PPRS_VBP".split()

@@ -87,7 +87,7 @@ class AssociativeNet(Model):
 
         self.strengths = np.array(banks)
 
-    def compute_weights(self):
+    def compute_weights(self, binaryMat=True):
         K = self.K 
         V = len(self.vocab)
 
@@ -99,7 +99,7 @@ class AssociativeNet(Model):
                 for q in range(K):
                     W_pq = self.COUNTS[p*V:(p+1)*V, q*V:(q+1)*V]
                         
-                    binaryMat = True
+#                    binaryMat = True
                     if binaryMat:
 
                         for i in range(len(W_pq.data)):
@@ -128,7 +128,7 @@ class AssociativeNet(Model):
                         W_pq = W_pq.tolil()
                         for i in range(V):
                             for j in range(len(W_pq.rows[i])):
-                                self.W[p*V + i, q*V + W_pq.rows[i][j]] = float(np.log10(  (W_pq.data[i][j]  ) ) /(nnzs[i]*nnzs[j])  )
+                                self.W[p*V + i, q*V + W_pq.rows[i][j]] = float(  np.log2(1 + W_pq[i,j]) /(nnzs[i]*nnzs[j])  )
 
 
             ei, ev = eigs(self.W, k =10)
