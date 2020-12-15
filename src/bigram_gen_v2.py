@@ -46,12 +46,12 @@ if __name__ == "__main__":
                "numSlots":K,
                "C":1,
                "mode":"numpy",
-               "feedback":"stp",
+               "feedback":"sat",
                "init_weights":False,
                "gpu":False,
-               "localist":True,
-               "distributed":False,
-               "explicit":True}
+               "localist":False,
+               "distributed":True,
+               "explicit":False}
     ANet = AssociativeNet(hparams)
 
     memory_path = sys.argv[1]

@@ -9,6 +9,7 @@ from scipy.sparse.linalg import eigs
 from scipy.sparse import lil_matrix, csr_matrix
 from copy import deepcopy
 from GeneralNetModel import Model
+from progressbar import ProgressBar
 
 class AssociativeNet(Model):
     def __init__(self, hparams):
@@ -78,8 +79,8 @@ class AssociativeNet(Model):
                 banks += bank_k
             elif self.hparams["distributed"]:
                 for i in range(len(self.vocab)):
-                    bank_k.append( np.abs(vcos(np.array(self.E[i]), self.echo_full[k*self.N:(k+1)*self.N]))) 
-                    #bank_k.append( np.exp(vcos(np.array(self.E[i]), self.echo_full[k*self.N:(k+1)*self.N]))) 
+                    #bank_k.append( np.abs(vcos(np.array(self.E[i].todense())[0], self.echo_full[k*self.N:(k+1)*self.N]))) 
+                    bank_k.append( np.exp(vcos(np.array(self.E[i]), self.echo_full[k*self.N:(k+1)*self.N]))) 
                 #bank_k = list(np.array(bank_k)/sum(bank_k))
                 banks += bank_k
 
@@ -90,53 +91,88 @@ class AssociativeNet(Model):
     def compute_weights(self, binaryMat=True):
         K = self.K 
         V = len(self.vocab)
+        N = self.N
 
         if self.hparams['explicit'] and not self.hparams['init_weights']:
-            #self.W = np.zeros(self.COUNTS.shape)#
-            self.W = lil_matrix(self.COUNTS.shape)
+            if self.hparams['localist']:
+                self.W = np.zeros(self.COUNTS.shape)#
+                #self.W = lil_matrix(self.COUNTS.shape)
 
-            for p in range(K):
-                for q in range(K):
-                    W_pq = self.COUNTS[p*V:(p+1)*V, q*V:(q+1)*V]
-                        
-#                    binaryMat = True
-                    if binaryMat:
+                for p in range(K):
+                    for q in range(K):
+                        W_pq = self.COUNTS[p*V:(p+1)*V, q*V:(q+1)*V]
+                            
+#                        binaryMat = True
+                        if binaryMat:
 
-                        for i in range(len(W_pq.data)):
-                            if W_pq.data[i] > 2:
-                                W_pq.data[i] = 1
-                            else:
-                                W_pq.data[i] = 0
-                        W_pq.eliminate_zeros()
-                        print(W_pq.nnz)
-#                        W_pq.data = W_pq.data/650.0
-                        W_pq = W_pq.tolil()
-                        for i in range(V):
-                            for j in range(len(W_pq.rows[i])):
-                                self.W[p*V + i, q*V + W_pq.rows[i][j]] = W_pq.data[i][j]
-                    else:
-                        #experimental
-                        nnzs = W_pq.getnnz(axis=1)
-                        #for i in range(len(W_pq.data)):
-                        #    if W_pq.data[i] > 2:
-                        #        W_pq.data[i] = 1
-                        #    else:
-                        #        W_pq.data[i] = 0
-                        #W_pq.eliminate_zeros()
-                        print(W_pq.nnz)
-                        #W_pq.data = W_pq.data/650.0
-                        W_pq = W_pq.tolil()
-                        for i in range(V):
-                            for j in range(len(W_pq.rows[i])):
-                                self.W[p*V + i, q*V + W_pq.rows[i][j]] = float(  np.log2(1 + W_pq[i,j]) /(nnzs[i]*nnzs[j])  )
+                            for i in range(len(W_pq.data)):
+                                if W_pq.data[i] > 2:
+                                    W_pq.data[i] = 1
+                                else:
+                                    W_pq.data[i] = 0
+                            W_pq.eliminate_zeros()
+                            print(W_pq.nnz)
+#                            W_pq.data = W_pq.data/650.0
+                            W_pq = W_pq.tolil()
+                            for i in range(V):
+                                for j in range(len(W_pq.rows[i])):
+                                    self.W[p*V + i, q*V + W_pq.rows[i][j]] = W_pq.data[i][j]
+                        else:
+                            #experimental
+                            nnzs = W_pq.getnnz(axis=1)
+                            #for i in range(len(W_pq.data)):
+                            #    if W_pq.data[i] > 2:
+                            #        W_pq.data[i] = 1
+                            #    else:
+                            #        W_pq.data[i] = 0
+                            #W_pq.eliminate_zeros()
+                            print(W_pq.nnz)
+                            #W_pq.data = W_pq.data/650.0
+                            W_pq = W_pq.tolil()
+                            for i in range(V):
+                                for j in range(len(W_pq.rows[i])):
+                                    self.W[p*V + i, q*V + W_pq.rows[i][j]] = float(  np.log2(1 + W_pq[i,j]) /(nnzs[i]*nnzs[j])  )
+            else: #self.hparams['distributed']
+                #self.W = np.zeros(self.COUNTS.shape)#
+                self.W = lil_matrix(self.COUNTS.shape) #can't use sparse because W will be dense                                                                               
+                for p in range(K):
+                    for q in range(K):
+                        W_pq = self.COUNTS[p*V:(p+1)*V, q*V:(q+1)*V]
+                            
+                        #binaryMat = True
+                        if binaryMat:
+                                                                                                                                  
+                            for i in range(len(W_pq.data)):
+                                if W_pq.data[i] > 2:
+                                    W_pq.data[i] = 1
+                                else:
+                                    W_pq.data[i] = 0
+                            W_pq.eliminate_zeros()
+                            print(W_pq.nnz)
+                             #W_pq.data = W_pq.data/650.0
+                            W_pq = W_pq.tolil()
+                            for i in range(V):
+                                pbar = ProgressBar(maxval = len(W_pq.rows[i])).start()
+                                for j in range(len(W_pq.rows[i])):
+                                    #self.W[p*V + i, q*V + W_pq.rows[i][j]] = 
+                                    self.W[p*N:(p+1)*N, q*N:(q+1)*N] += W_pq.data[i][j]*np.outer(self.E[i], self.E[ W_pq.rows[i][j] ])
+                                    print(W_pq.rows[i][j])
+                                    pbar.update(j+1)
+                        else:
+                            #experimental
+                            nnzs = W_pq.getnnz(axis=1)
+                            print(W_pq.nnz)
+                            #W_pq.data = W_pq.data/650.0
+                            W_pq = W_pq.tolil()
+                            for i in range(V):
+                                for j in range(len(W_pq.rows[i])):
+                                    self.W[p*V + i, q*V + W_pq.rows[i][j]] = float(  np.log2(1 + W_pq[i,j]) /(nnzs[i]*nnzs[j])  )
 
-
+            self.W = self.W.tocsr()
+            #if self.hparams["feedback"] == "stp":
             ei, ev = eigs(self.W, k =10)
             self.ei = ei.real
             self.ev = ev.real
-
-            self.W = self.W.tocsr()
-
             self.W.data /= self.ei[0] + 0.1
 
         else:
@@ -174,6 +210,7 @@ class AssociativeNet(Model):
         '''Implicitly computes the matrix multiplication of a probe, X (size N)
            Uses the counts, C in (VK, VK), initial probe state, X0, and the environmental
            vectors, E in (V, N)'''
+#        print("Matmul")
         N = self.N
         K = self.K
         V = len(self.vocab)
@@ -181,11 +218,44 @@ class AssociativeNet(Model):
         beta = self.beta
         for p in range(K):
             for q in range(K):
+#                pbar= ProgressBar(maxval=V).start()
                 for k in range(V):
                     for l in self.WEIGHTS_IDX[p][q][k]: #WEIGHT_IDX has the indices of nonzero cells for each row
-                        Y[p*N:(p+1)*N] += beta*self.WEIGHTS[p][q][k, l]*np.dot(X[q*N:(q+1)*N], self.E[l])*self.E[k] #Memory term
-                Y[p*N:(p+1)*N] += np.dot(X0[q*N:(q+1)*N], X[q*N:(q+1)*N])*X0[p*N:(p+1)*N] #STP term
+                        dY = beta*self.WEIGHTS[p][q][k, l]*np.dot(X[q*N:(q+1)*N], self.E[l])*self.E[k]
+                        Y[p*N:(p+1)*N] += dY
+#                    pbar.update(k+1)
+                        #Y[p*N:(p+1)*N] += dY#beta*self.WEIGHTS[p][q][k, l]*np.dot(X[q*N:(q+1)*N], self.E[l])*self.E[k] #Memory term #dense
+#                        Y[p*N:(p+1)*N] += beta*self.WEIGHTS[p][q][k, l]*X[q*N:(q+1)*N].dot(self.E[l])*self.E[k] #sparse
+
+                #Y[p*N:(p+1)*N] += np.dot(X0[q*N:(q+1)*N], X[q*N:(q+1)*N])*X0[p*N:(p+1)*N] #STP term
+                #Y[p*N:(p+1)*N] += X0[q*N:(q+1)*N].dot(X[q*N:(q+1)*N])*X0[p*N:(p+1)*N] #STP term
         return Y
+
+    def ImplicitMatMul_distributed_sp(self, X, X0):
+        '''Implicitly computes the matrix multiplication of a probe, X (size N)
+           Uses the counts, C in (VK, VK), initial probe state, X0, and the environmental
+           vectors, E in (V, N)'''
+        print("Matmul")
+        N = self.N
+        K = self.K
+        V = len(self.vocab)
+        Y = lil_matrix((1, N*K))
+        beta = self.beta
+        for p in range(K):
+            for q in range(K):
+                pbar = ProgressBar(maxval = V).start()
+                for k in range(V):
+                    for l in self.WEIGHTS_IDX[p][q][k]: #WEIGHT_IDX has the indices of nonzero cells for each row
+                        Y[0, p*N:(p+1)*N] += beta*self.WEIGHTS[p][q][k, l]*X[0, q*N:(q+1)*N].dot(self.E[l].T)*self.E[k] #sparse
+                    pbar.update(k+1)
+
+                #Y[p*N:(p+1)*N] += np.dot(X0[q*N:(q+1)*N], X[q*N:(q+1)*N])*X0[p*N:(p+1)*N] #STP term
+                #Y[0, p*N:(p+1)*N] += X0[q*N:(q+1)*N].dot(X[q*N:(q+1)*N])*X0[p*N:(p+1)*N] #STP term
+
+        return Y
+
+
+
 
     def ImplicitMatMul_localist(self, X, X0):
         '''Implicitly computes the mat N = self.Nrix multiplication of a probe, X (size N)N
@@ -204,41 +274,114 @@ class AssociativeNet(Model):
                 Y[p*N:(p+1)*N] += np.dot(X0[q*N:(q+1)*N], X[q*N:(q+1)*N])*X0[p*N:(p+1)*N] #STP term
         return Y
 
+#    def feedback_sat(self):
+#        
+#        ###compute strengths for the initial pattern in buffer
+#        self.compute_sts()
+#        self.sort_banks()
+#        frames=  [deepcopy(self.strengths)]
+#        echo_frames = [deepcopy(self.echo_full)]
+#
+#        ###compute the next state
+#        x_new = self.MatMul(self.echo_full, 0*self.echo_full) #TODO: find a better way to deal with STP term 
+#        x_new = self.saturate(x_new)
+#        diff = norm(self.echo_full - x_new)
+#
+#        while(diff > self.eps):
+#            ###load buffer with new state
+#            self.echo_full = 1*x_new
+#            self.compute_sts() #compute strengths with updated buffer
+#            self.sort_banks()
+#            frames.append(deepcopy(self.strengths))
+#            echo_frames.append(deepcopy(self.echo_full))
+#
+#            ###compute the next state
+#            x_new = self.MatMul(self.echo_full, 0*self.echo_full)
+#            x_new = self.saturate(x_new)
+#            diff = norm(self.echo_full - x_new)
+#
+#        self.echo_full = 1*x_new
+#        self.compute_sts() #compute strengths with updated buffer
+#        self.sort_banks()
+#        frames.append(deepcopy(self.strengths))
+#        echo_frames.append(deepcopy(self.echo_full))
+#
+#
+#        self.frames = frames
+#        self.echo_frames = echo_frames
     def feedback_sat(self):
-        
-        ###compute strengths for the initial pattern in buffer
+        from scipy.sparse.linalg import norm as norm_sp
+        ###compute strengths for the initial input pattern in buffer
         self.compute_sts()
         self.sort_banks()
+
+        self.view_banks(5)
         frames=  [deepcopy(self.strengths)]
         echo_frames = [deepcopy(self.echo_full)]
 
+        vlens = [np.linalg.norm(self.echo_full)]
+        energy = []
+#        energy= [-0.5*self.echo_full.T.dot(self.W).dot(self.echo_full)]
+
         ###compute the next state
-        x_new = self.MatMul(self.echo_full, 0*self.echo_full) #TODO: find a better way to deal with STP term 
-        x_new = self.saturate(x_new)
-        diff = norm(self.echo_full - x_new)
+        #x0 = self.alpha*self.echo_full #for STP
+        #self.W += np.outer(x0, x0)
+        x0 = self.echo_full#csr_matrix(self.echo_full)
+        x = self.echo_full#csr_matrix(self.echo_full)
+        x_new = self.MatMul(x, 0*x0)
+        vlen = float(norm(x_new)) 
+        vlens.append(vlen)
+        #x_new = x_new/vlen
+        x_new.clip(min=-1, max=1, out=x_new)
+        diff = float(norm(x0 - x_new))
+        count = 0
 
         while(diff > self.eps):
+            count += 1
             ###load buffer with new state
+            x = 1*x_new
             self.echo_full = 1*x_new
             self.compute_sts() #compute strengths with updated buffer
             self.sort_banks()
-            frames.append(deepcopy(self.strengths))
-            echo_frames.append(deepcopy(self.echo_full))
+            self.view_banks(5)
+#            frames.append(deepcopy(self.strengths))
+#            echo_frames.append(deepcopy(self.echo_full))
+
+
+
 
             ###compute the next state
-            x_new = self.MatMul(self.echo_full, 0*self.echo_full)
-            x_new = self.saturate(x_new)
-            diff = norm(self.echo_full - x_new)
+            x_new = self.MatMul(x, 0*x)#self.echo_full.dot(self.W)#self.MatMul(self.echo_full, x0) 
+            vlen = float(norm(x_new))
+            vlens.append(vlen)
 
-        self.echo_full = 1*x_new
+            #x_new = x_new/vlen
+            x_new.clip(min=-1, max=1, out=x_new)
+#            energy.append(-0.5*self.echo_full.T.dot(self.W).dot(self.echo_full))
+            diff =  float(norm(x - x_new))
+            
+            print(diff, count)
+
+ #           print "-"*32
+ #           self.view_banks(5)
+ #           print count, diff
+
+        #this way we always reset memory if we have to exit
+        #self.W -= np.outer(x0, x0)
+
+        self.echo_full = 1*x_new#1*np.array(x_new.todense())[0]
         self.compute_sts() #compute strengths with updated buffer
         self.sort_banks()
-        frames.append(deepcopy(self.strengths))
-        echo_frames.append(deepcopy(self.echo_full))
+#        frames.append(deepcopy(self.strengths))
+#        echo_frames.append(deepcopy(self.echo_full))
+#        energy.append(-0.5*self.echo_full.T.dot(self.W).dot(self.echo_full))
 
 
         self.frames = frames
         self.echo_frames = echo_frames
+        self.vlens  = vlens
+        self.count = count
+
 
     def feedback_lin(self):
 
@@ -377,13 +520,14 @@ class AssociativeNet(Model):
         #        if corpus_process[i] in wvecs:
         #            self.E.append(list(wvecs[corpus_process[i]]))
         #        else:
-        #            if self.hparams["distributed"]:
-        #                e = np.hstack([np.ones(self.N/2), -1*np.ones(self.N/2)])
-        #                np.random.shuffle(e)
-        #            elif self.hparams["localist"]:
-        #                e = np.zeros(self.N)
-        #                e[len(self.vocab)-1] = 1
-        #            self.E.append(list(e))
+                if self.hparams["distributed"]:
+                    e = np.hstack([np.ones(int(self.N/2)), -1*np.ones(int(self.N/2))]) #dense
+#                    e = np.hstack([np.ones(int(10/2)), -1*np.ones(int(10/2)), np.zeros(self.N - 10)]) #spatter-codes 
+                    np.random.shuffle(e)
+                #elif self.hparams["localist"]:
+                #    e = np.zeros(self.N)
+                #    e[len(self.vocab)-1] = 1
+                    self.E.append(list(e))
 
             self.V = len(self.vocab)
 
