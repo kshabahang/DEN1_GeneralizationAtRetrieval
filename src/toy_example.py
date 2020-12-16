@@ -57,7 +57,7 @@ if __name__ == "__main__":
                "numSlots":K,
                "C":1,
                "mode":"numpy",
-               "feedback":"stp", #linear / saturate (BSB) / stp (DEN)
+               "feedback":"saturate", #linear / saturate (BSB) / stp (DEN)
                "gpu":False}
     ANet = AssociativeNet(hparams)
     
@@ -176,30 +176,7 @@ if __name__ == "__main__":
     
         print ("probing with '" + probe + "'")
         ANet.probe(probe, st = strength, noise = noise)
-    
-        #if i != len(conds)-1:
-        #    strength_plot(ANet.frames, ANet.vocab, axarr=axarr[i], setXlabel=False, sym_map = sym_map)
-        #else:
-        #    strength_plot(ANet.frames, ANet.vocab, axarr=axarr[i], sym_map = sym_map)
-        #fig,[f1,f2] = plt.subplots(nrows=1, ncols=2)
-        #fig.suptitle(conds[i].replace("_", " / ") + ": " + probe )
-        #activations = np.array(ANet.frames).T # in V*K x 1
-        #for j in range(V):
-        #    f1.plot(activations[j], label = ANet.vocab[j] )
-        #    f2.plot(activations[V + j], label = ANet.vocab[j] )
-        #f1.set_xticks( np.linspace(0, len(activations[0])-1, 6, dtype=int) )#range(len(activations[0])))
-        #f2.set_xticks( np.linspace(0, len(activations[0])-1, 6, dtype=int) )#range(len(activations[0])))
-    
-        #f1.set_ylim((-0.1,1.75))
-        #f2.set_ylim((-0.1,1.75))
-        #f1.set_xlabel("t")
-        #f1.set_ylabel("Strength")
-        #f2.set_xlabel("t")
-    
-        #f2.legend( loc=1, borderaxespad=0., bbox_to_anchor=(0, 0), framealpha=1)
-    
-
-    
+     
     res = list(zip(map(lambda cond : probes[cond], conds), reports_cond))
     
     headers = ["the cat", "a dog", "the a", "a a", "the dog", "a cat", "dog the", "cat a"]
@@ -231,7 +208,7 @@ if __name__ == "__main__":
                     
 #    rc('axes',linewidth=100)
 
-    if hparams["feedback"] == "stp":
+    if True:#hparams["feedback"] == "stp":
         up_left = np.array(frames_by_probeANDresp['the dog the dog'])[0][:17, :4]
         up_right = np.array(frames_by_probeANDresp['the dog the dog'])[0][:17, 4:]
     
@@ -260,9 +237,13 @@ if __name__ == "__main__":
         plot.set(ylim=(0,0.8))
 
     
-        
-        bottom_left = np.array(frames_by_probeANDresp['dog the the cat'])[0][:17, :4]
-        bottom_right = np.array(frames_by_probeANDresp['dog the the cat'])[0][:17, 4:]
+        if hparams['feedback'] == 'stp':        
+            bottom_left = np.array(frames_by_probeANDresp['dog the the cat'])[0][:17, :4]
+            bottom_right = np.array(frames_by_probeANDresp['dog the the cat'])[0][:17, 4:]
+        elif hparams['feedback'] == 'saturate':
+            bottom_left = np.array(frames_by_probeANDresp['dog the dog the'])[0][:17, :4]
+            bottom_right = np.array(frames_by_probeANDresp['dog the dog the'])[0][:17, 4:]
+
     
     
         activation = []

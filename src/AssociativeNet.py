@@ -274,41 +274,6 @@ class AssociativeNet(Model):
                 Y[p*N:(p+1)*N] += np.dot(X0[q*N:(q+1)*N], X[q*N:(q+1)*N])*X0[p*N:(p+1)*N] #STP term
         return Y
 
-#    def feedback_sat(self):
-#        
-#        ###compute strengths for the initial pattern in buffer
-#        self.compute_sts()
-#        self.sort_banks()
-#        frames=  [deepcopy(self.strengths)]
-#        echo_frames = [deepcopy(self.echo_full)]
-#
-#        ###compute the next state
-#        x_new = self.MatMul(self.echo_full, 0*self.echo_full) #TODO: find a better way to deal with STP term 
-#        x_new = self.saturate(x_new)
-#        diff = norm(self.echo_full - x_new)
-#
-#        while(diff > self.eps):
-#            ###load buffer with new state
-#            self.echo_full = 1*x_new
-#            self.compute_sts() #compute strengths with updated buffer
-#            self.sort_banks()
-#            frames.append(deepcopy(self.strengths))
-#            echo_frames.append(deepcopy(self.echo_full))
-#
-#            ###compute the next state
-#            x_new = self.MatMul(self.echo_full, 0*self.echo_full)
-#            x_new = self.saturate(x_new)
-#            diff = norm(self.echo_full - x_new)
-#
-#        self.echo_full = 1*x_new
-#        self.compute_sts() #compute strengths with updated buffer
-#        self.sort_banks()
-#        frames.append(deepcopy(self.strengths))
-#        echo_frames.append(deepcopy(self.echo_full))
-#
-#
-#        self.frames = frames
-#        self.echo_frames = echo_frames
     def feedback_sat(self):
         from scipy.sparse.linalg import norm as norm_sp
         ###compute strengths for the initial input pattern in buffer
@@ -344,7 +309,7 @@ class AssociativeNet(Model):
             self.compute_sts() #compute strengths with updated buffer
             self.sort_banks()
             self.view_banks(5)
-#            frames.append(deepcopy(self.strengths))
+            frames.append(deepcopy(self.strengths))
 #            echo_frames.append(deepcopy(self.echo_full))
 
 
@@ -368,8 +333,10 @@ class AssociativeNet(Model):
 
         #this way we always reset memory if we have to exit
         #self.W -= np.outer(x0, x0)
-
-        self.echo_full = 1*x_new#1*np.array(x_new.todense())[0]
+        if type(self.echo_full) == np.ndarray:
+            self.echo_full = 1*x_new
+        else:
+            self.echo_full = 1*np.array(x_new.todense())[0]
         self.compute_sts() #compute strengths with updated buffer
         self.sort_banks()
 #        frames.append(deepcopy(self.strengths))
@@ -443,21 +410,22 @@ class AssociativeNet(Model):
                 self.W[ii, jj] += x0[ii]*x0[jj]
         #self.W += np.outer(x0, x0)
         try:
-            x = csr_matrix(self.echo_full)
+            x = 1*self.echo_full#csr_matrix(self.echo_full)
             x_new = x.dot(self.W)#self.MatMul(self.echo_full, x0)
-            vlen = float(norm_sp(x_new)) 
+            vlen = float(norm(x_new)) 
             vlens.append(vlen)
             x_new = x_new/vlen
-            diff = float(norm_sp(x - x_new))
+            diff = float(norm(x - x_new))
             count = 0
 
             while(diff > self.eps):
                 count += 1
                 ###load buffer with new state
                 x = 1*x_new
-                #self.compute_sts() #compute strengths with updated buffer
-                #self.sort_banks()
-#                frames.append(deepcopy(self.strengths))
+                self.echo_full = 1*x
+                self.compute_sts() #compute strengths with updated buffer
+                self.sort_banks()
+                frames.append(deepcopy(self.strengths))
 #                echo_frames.append(deepcopy(self.echo_full))
 
 
@@ -465,12 +433,12 @@ class AssociativeNet(Model):
 
                 ###compute the next state
                 x_new = x.dot(self.W)#self.echo_full.dot(self.W)#self.MatMul(self.echo_full, x0) 
-                vlen = float(norm_sp(x_new))
+                vlen = float(norm(x_new))
                 vlens.append(vlen)
 
                 x_new = x_new/vlen
 #                energy.append(-0.5*self.echo_full.T.dot(self.W).dot(self.echo_full))
-                diff =  float(norm_sp(x - x_new))
+                diff =  float(norm(x - x_new))
 
 
             for ii in nnz0:
@@ -483,14 +451,17 @@ class AssociativeNet(Model):
  #               self.view_banks(5)
  #               print count, diff
         except Exception as e:
+            count = 0
             print(e)
             for ii in nnz0:
                 for jj in nnz0:
                     self.W[ii, jj] -= x0[ii]*x0[jj]
         #this way we always reset memory if we have to exit
         #self.W -= np.outer(x0, x0)
-
-        self.echo_full = 1*np.array(x_new.todense())[0]
+        if type(self.echo_full) == np.ndarray:
+            self.echo_full = 1*x_new
+        else:
+            self.echo_full = 1*np.array(x_new.todense())[0]
         self.compute_sts() #compute strengths with updated buffer
         self.sort_banks()
 #        frames.append(deepcopy(self.strengths))
