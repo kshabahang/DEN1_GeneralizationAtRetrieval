@@ -336,7 +336,7 @@ class AssociativeNet(Model):
         diff = float(norm(x0 - x_new))
         count = 0
 
-        while(diff > self.eps):
+        while(diff > self.eps and count < 100):
             count += 1
             ###load buffer with new state
             x = 1*x_new
