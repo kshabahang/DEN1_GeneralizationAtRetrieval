@@ -51,6 +51,7 @@ if __name__ == "__main__":
                "gpu":False,
                "localist":False,
                "distributed":True,
+               "maxiter":100,
                "explicit":False}
     ANet = AssociativeNet(hparams)
 

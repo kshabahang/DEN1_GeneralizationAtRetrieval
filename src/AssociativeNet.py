@@ -24,7 +24,8 @@ class AssociativeNet(Model):
         self.beta  = hparams["beta"] 
         self.attractors = [] 
         self.vocab = [] #vocabulary
-        self.eta = hparams["eta"] 
+        self.eta = hparams["eta"]
+        self.maxiter = hparams['maxiter']
 
         self.vlens = [] #used to store vector lengths during recurrence
 
@@ -84,8 +85,8 @@ class AssociativeNet(Model):
         if self.hparams['explicit'] and not self.hparams['init_weights']:
             '''In this case we also construct an explicit matrix'''
             
-           self.W = np.zeros(self.COUNTS.shape)#
-           for p in range(K):
+            self.W = lil_matrix(self.COUNTS.shape)#np.zeros(self.COUNTS.shape)#
+            for p in range(K): #TODO speed this up by exploiting the symmetry
                for q in range(K):
                    W_pq = self.COUNTS[p*V:(p+1)*V, q*V:(q+1)*V]
                    if binaryMat:
@@ -106,7 +107,10 @@ class AssociativeNet(Model):
                        W_pq = W_pq.tolil()
                        for i in range(V):
                            for j in range(len(W_pq.rows[i])):
-                               self.W[p*V + i, q*V + W_pq.rows[i][j]] = float(  np.log2(1 + W_pq[i,j]) /(nnzs[i]*nnzs[j])  )
+                               self.W[p*V + i, q*V + W_pq.rows[i][j]] = float(  np.log10(1 + W_pq[i,j]) /(nnzs[i]*nnzs[j])  )
+
+                       
+
 
 
             self.W = self.W.tocsr()
@@ -115,6 +119,7 @@ class AssociativeNet(Model):
             self.ei = ei.real
             self.ev = ev.real
             self.W.data /= self.ei[0] + 0.1
+            self.W.eliminate_zeros() 
 
         else:
             '''No explicit matrix...matmul will be done implicitly'''
@@ -208,7 +213,7 @@ class AssociativeNet(Model):
         x_new.clip(min=-1, max=1, out=x_new) #saturation
         diff = norm(x0 - x_new)
         count = 0
-        while(diff > self.eps and count < 100):
+        while(diff > self.eps and count < self.maxiter):
             count += 1
             ###load buffer with new state
             x = 1*x_new
@@ -276,6 +281,7 @@ class AssociativeNet(Model):
 
 
     def feedback_stp(self):
+        from scipy.sparse.linalg import norm as norm_sp
         '''recurrence with stp (i.e., DEN)'''
         ###compute strengths for the initial input pattern in buffer
         self.compute_sts()
@@ -296,19 +302,19 @@ class AssociativeNet(Model):
                 self.W[ii, jj] += x0[ii]*x0[jj]
 
         try: #this is here to ensure stp is taken back out in case of interruption..feel free to crt-c out
-            x = 1*self.echo_full
+            x = csr_matrix(1*self.echo_full)#1*self.echo_full
             x_new = x.dot(self.W)
-            vlen = norm(x_new)
+            vlen = float(norm_sp(x_new))
             vlens.append(vlen)
             x_new = x_new/vlen
-            diff = norm(x - x_new)
+            diff = norm_sp(x - x_new)
             count = 0
 
             while(diff > self.eps):
                 count += 1
                 ###load buffer with new state
                 x = 1*x_new
-                self.echo_full = 1*x
+                self.echo_full = np.array(x.todense())[0]#1*x
                 self.compute_sts() #compute strengths with updated buffer
                 self.sort_banks()
                 self.view_banks(5)
@@ -316,12 +322,12 @@ class AssociativeNet(Model):
 
                 ###compute the next state
                 x_new = x.dot(self.W) #took out implicit for now
-                vlen = float(norm(x_new))
+                vlen = float(norm_sp(x_new))
                 vlens.append(vlen)
 
                 x_new = x_new/vlen
 
-                diff =  float(norm(x - x_new))
+                diff =  float(norm_sp(x - x_new))
 
 
             for ii in nnz0:
@@ -337,7 +343,7 @@ class AssociativeNet(Model):
 
 
 
-        self.echo_full = 1*x_new
+        self.echo_full = np.array(x_new.todense())[0]#1*x_new
 
         self.compute_sts() #compute strengths with updated buffer
         self.sort_banks()
