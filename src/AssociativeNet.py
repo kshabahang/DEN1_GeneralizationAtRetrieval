@@ -71,7 +71,7 @@ class AssociativeNet(Model):
                 banks += bank_k
             elif self.hparams["distributed"]:
                 for i in range(len(self.vocab)):
-                    bank_k.append( np.exp(vcos(np.array(self.E[i]), self.echo_full[k*self.N:(k+1)*self.N]))) 
+                    bank_k.append( vcos(np.array(self.E[i]), self.echo_full[k*self.N:(k+1)*self.N])) 
                 banks += bank_k
 
         self.strengths = np.array(banks)
@@ -105,13 +105,11 @@ class AssociativeNet(Model):
                        nnzs = W_pq.getnnz(axis=1)
                        print(W_pq.nnz) 
                        W_pq = W_pq.tolil()
+                       sumi=np.array(W_pq.sum(axis=1).T)[0]
+                       sumj=np.array(W_pq.sum(axis=0))[0]
                        for i in range(V):
                            for j in range(len(W_pq.rows[i])):
-                               self.W[p*V + i, q*V + W_pq.rows[i][j]] = float(  np.log10(1 + W_pq[i,j]) /(nnzs[i]*nnzs[j])  )
-
-                       
-
-
+                               self.W[p*V + i, q*V + W_pq.rows[i][j]] =  (W_pq[i,j]**2)/(sumi[i]*sumj[j])  
 
             self.W = self.W.tocsr()
             #if self.hparams["feedback"] == "stp":

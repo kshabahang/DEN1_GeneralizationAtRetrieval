@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
     memory_path = sys.argv[1]
 
-    NSamples = 5
+    NSamples = 100
 
     root_mem_path = "/home/ubuntu/LTM/DEN1_GeneralizationAtRetrieval/rsc"
 
@@ -83,7 +83,7 @@ if __name__ == "__main__":
     ANet.COUNTS = csr_matrix(C)
     del C
     print("Crunching out the weights...")
-    ANet.compute_weights()
+    ANet.compute_weights(binaryMat=True)
     ANet.nullvec = np.zeros((K*N))
 
     if ANet.hparams["gpu"]:
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     pairs = "VB_RBR_2_RBR_VB PPRS_NN_2_PPR_NN IN_VBG_2_IN_VBP NNS_VBP_2_NN_VBP NN_VBZ_2_NN_VBP DT_NN_2_NN_DT JJ_NN_2_NN_JJ NN_IN_2_IN_NN PPR_VBP_2_PPRS_VBP".split()
 
 
-    if False: 
+    if True: 
 
         grammatical = "VB_RBR PPRS_NN IN_VBG NNS_VBP NN_VBZ DT_NN JJ_NN NN_IN PPR_VBP".split()
         ungrammatical="RBR_VB PPR_NN IN_VBP NN_VBP NN_VBP NN_DT NN_JJ IN_NN PPRS_VBP".split()
@@ -104,18 +104,28 @@ if __name__ == "__main__":
             pair_set = pairs[i]
 
             print (pair_set)
-            
-            f = open("../rsc/bigrams/"+pair_set + ".pkl", "rb")
-            pair_items = pickle.load(f)
+             
+
+            f = open("../rsc/bigrams/" +grammatical[i] + ".txt", "r")
+            probes_g = f.readlines()
             f.close()
+
+            f = open("../rsc/bigrams/" +ungrammatical[i] + ".txt", "r")
+            probes_ug = f.readlines()
+            f.close()
+
+
 
 
             scores = {"correct":{}, "incorrect":{}}
 
 
 
-            for k in range(len(pair_items[:NSamples])):
-                (frq, [correct, incorrect]) = pair_items[k]
+            for k in range(NSamples):
+                #(frq, [correct, incorrect]) = pair_items[k]
+                frq = 0
+                correct = probes_g[k]
+                incorrect = probes_ug[k]
 
 
                 
@@ -185,6 +195,13 @@ if __name__ == "__main__":
                     else:
                         ANet.WEIGHTS[0][1][ANet.I[w1_c],ANet.I[w2_c]] = deepcopy(a2b)
                         ANet.WEIGHTS[1][0][ANet.I[w2_c],ANet.I[w1_c]] = deepcopy(b2a)
+
+
+            vlen_corr = np.array([scores['correct']['vlens'][i][-1] for i in range(len(scores['correct']['vlens']))])
+            vlen_incr = np.array([scores['incorrect']['vlens'][i][-1] for i in range(len(scores['incorrect']['vlens']))])
+
+            d = np.mean(vlen_corr - vlen_incr)/np.std(vlen_corr - vlen_incr)
+            print(d, np.mean(vlen_corr - vlen_incr))
 
 
             if toLesion:
