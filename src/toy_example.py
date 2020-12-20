@@ -49,7 +49,7 @@ if __name__ == "__main__":
                "V0":V0,
                "N":N,
                "localist":True,
-               "distributed":False,
+               "distributed": False,
                "init_weights":True,
                "explicit":True,
                "idx_predict":1,
@@ -57,6 +57,7 @@ if __name__ == "__main__":
                "numSlots":K,
                "C":1,
                "mode":"numpy",
+               "maxiter":1000,
                "feedback":"saturate", #linear / saturate (BSB) / stp (DEN)
                "gpu":False}
     ANet = AssociativeNet(hparams)
@@ -86,6 +87,20 @@ if __name__ == "__main__":
     isort = np.argsort(ei)[::-1]
     ei = ei[isort]
     ev = ev[:, isort]
+
+#    print(ei[0], sorted(zip(ev[:, 0][:ANet.V], ANet.vocab))[::-1], sorted(zip(ev[:, 0][ANet.V:], ANet.vocab))[::-1] )
+#    print(ei[1], sorted(zip(ev[:, 1][:ANet.V], ANet.vocab))[::-1], sorted(zip(ev[:, 1][ANet.V:], ANet.vocab))[::-1] )
+    print("Eigenspectrum")
+    for i in range(2):
+        top1 = sorted(zip(ev[:, i][:ANet.V], ANet.vocab))[::-1]
+        top2 = sorted(zip(ev[:, i][ANet.V:], ANet.vocab))[::-1]
+        s = "%5.2f %5.2f %5s %5.2f %5s "%(ei[i].real, top1[0][0], top1[0][1], top2[0][0], top2[0][1] )
+        print(s)
+        for j in range(3):
+            s =  "%5s %5.2f %5s %5.2f %5s "%('', top1[j+1][0], top1[j+1][1], top2[j+1][0], top2[j+1][1] )
+            print(s)
+        print('-'*32)
+
     
     probes = {"old_strong":p_a, 
               "old_weak":p_b,
