@@ -5,8 +5,9 @@ from itertools import combinations, product
 import numpy as np
 from scipy.linalg import hadamard, norm
 
-from scipy.sparse.linalg import eigs
+from scipy.sparse.linalg import eigs, eigen
 from scipy.sparse import lil_matrix, csr_matrix
+from scipy import float128
 from copy import deepcopy
 from GeneralNetModel import Model
 from progressbar import ProgressBar
@@ -26,6 +27,7 @@ class AssociativeNet(Model):
         self.vocab = [] #vocabulary
         self.eta = hparams["eta"]
         self.maxiter = hparams['maxiter']
+        self.multi_degree = hparams['multiDegree']
 
         self.vlens = [] #used to store vector lengths during recurrence
 
@@ -62,6 +64,7 @@ class AssociativeNet(Model):
 
     def compute_sts(self):
         '''compute strengths of activations from the echo'''
+
         banks = []
         for k in range(self.K):
             bank_k = []
@@ -80,66 +83,178 @@ class AssociativeNet(Model):
         '''Compute the weights from the co-occurrence counts'''
         K = self.K 
         V = len(self.vocab)
+        self.V = V
+        L = len(self.Ds)
         N = self.N
+        if self.multi_degree:
+            self.W = lil_matrix((K*V*L, K*V*L), dtype=float128)#np.zeros(self.COUNTS.shape)#
+            print("Setting weights")
+            pbar = ProgressBar(maxval=L).start()
+            for l in range(L):
+                for p in range(K): #
+                   for q in range(p, K):
+                       if l == 0:
+                           D = self.Ds[l][p*V:(p+1)*V, q*V:(q+1)*V]
+                       else:
+                           D = self.Ds[l][p*V:(p+1)*V, q*V:(q+1)*V] - self.Ds[l-1][p*V:(p+1)*V, q*V:(q+1)*V]
+                       W_pq = D.tolil()
+                       #W_pq[W_pq > 0] = 0.7**l
+                       shift_L = l*K*V
+                       #self.W[shift_L + p*V:shift_L + p*V + V, shift_L + q*V :shift_L + q*V + V] = W_pq
+                       #self.W[shift_L + q*V :shift_L + q*V + V ,shift_L + p*V:shift_L + p*V + V] = W_pq.T
+                       if p == q:
+                           for i in range(V):
+                               self.W[shift_L + p*V + i,shift_L + q*V + i] =1# 0.7**l
+                               self.W[shift_L + q*V + i,shift_L + p*V + i] =1# 0.7**l
 
-        if self.hparams['explicit'] and not self.hparams['init_weights']:
-            '''In this case we also construct an explicit matrix'''
-            
-            self.W = lil_matrix(self.COUNTS.shape)#np.zeros(self.COUNTS.shape)#
-            for p in range(K): #TODO speed this up by exploiting the symmetry
-               for q in range(K):
-                   W_pq = self.COUNTS[p*V:(p+1)*V, q*V:(q+1)*V]
-                   if binaryMat:
-                       for i in range(len(W_pq.data)):
-                           if W_pq.data[i] > 2:
-                               W_pq.data[i] = 1
-                           else:
-                               W_pq.data[i] = 0
-                       W_pq.eliminate_zeros()
-                       W_pq = W_pq.tolil()
                        for i in range(V):
                            for j in range(len(W_pq.rows[i])):
-                               self.W[p*V + i, q*V + W_pq.rows[i][j]] = W_pq.data[i][j]
-                   else:
-                       #experimental: this is for exploring new normalizations
-                       nnzs = W_pq.getnnz(axis=1)
-                       print(W_pq.nnz) 
-                       W_pq = W_pq.tolil()
-                       sumi=np.array(W_pq.sum(axis=1).T)[0]
-                       sumj=np.array(W_pq.sum(axis=0))[0]
-                       for i in range(V):
-                           for j in range(len(W_pq.rows[i])):
-                               self.W[p*V + i, q*V + W_pq.rows[i][j]] =  (W_pq[i,j]**2)/(sumi[i]*sumj[j])  
+                               self.W[shift_L + p*V + i,shift_L + q*V + W_pq.rows[i][j]] = 0.8**l#W_pq.data[i][j]#/len(W_pq.rows[i])
+                               self.W[shift_L + q*V + W_pq.rows[i][j],shift_L + p*V + i] = 0.8**l #W_pq.data[i][j]#/len(W_pq.rows[i])
+                pbar.update(l+1)
+
+
 
             self.W = self.W.tocsr()
-            #if self.hparams["feedback"] == "stp":
-            ei, ev = eigs(self.W, k =10)
-            self.ei = ei.real
-            self.ev = ev.real
-            self.W.data /= self.ei[0] + 0.1
+            self.update_eig()
             self.W.eliminate_zeros() 
 
         else:
-            '''No explicit matrix...matmul will be done implicitly'''
-            self.WEIGHTS     = []
-            self.WEIGHTS_IDX = []
-            for p in range(K):
-                weights_p = []
-                weights_p_idx = []
-                for q in range(K):
-                    W_pq = self.COUNTS[p*V:(p+1)*V, q*V:(q+1)*V]
-                    for i in range(len(W_pq.data)):
-                        if W_pq.data[i] > 2:
-                            W_pq.data[i] = 1
-                        else:
-                            W_pq.data[i] = 0
-                    W_pq.eliminate_zeros()
-                    W_pq.data = W_pq.data/300.0
+            if self.hparams['explicit'] and not self.hparams['init_weights']:
+                '''In this case we also construct an explicit matrix'''
+                
+                self.W = lil_matrix(self.COUNTS.shape, dtype=float128)#np.zeros(self.COUNTS.shape)#
+                for p in range(K): #TODO speed this up by exploiting the symmetry
+                   for q in range(p, K):
+                       W_pq = self.D[p*V:(p+1)*V, q*V:(q+1)*V]
+                       print(W_pq.shape)
+                       W_pq.eliminate_zeros()
+                       if binaryMat:
+                           for i in range(len(W_pq.data)):
+                               if W_pq.data[i] > 2:
+                                   W_pq.data[i] = 1
+                               else:
+                                   W_pq.data[i] = 0
+                           W_pq.eliminate_zeros()
+                           W_pq = W_pq.tolil()
+                           for i in range(V):
+                               for j in range(len(W_pq.rows[i])):
+                                   self.W[p*V + i, q*V + W_pq.rows[i][j]] = W_pq.data[i][j]#/len(W_pq.rows[i])
+                                   self.W[q*V + W_pq.rows[i][j], p*V + i] = W_pq.data[i][j]#/len(W_pq.rows[i])
+                       else:
+                           #experimental: this is for exploring new normalizations
+                           nnzs = W_pq.getnnz(axis=1)
+                           print(W_pq.nnz) 
+                        
+                           W_pq = W_pq.tolil()  
 
-                    weights_p.append(W_pq)
-                    weights_p_idx.append(lil_matrix(W_pq).rows) #nonzero cell idxs for each row
-                self.WEIGHTS_IDX.append(weights_p_idx)
-                self.WEIGHTS.append(weights_p)
+                           S = W_pq.sum()
+
+                           sumi=(np.array(W_pq.sum(axis=1).T)[0]+1)/S
+                           sumj=(np.array(W_pq.sum(axis=0))[0]+1)/S
+                           for i in range(V):
+                               for j in range(len(W_pq.rows[i])):
+                                   #self.W[p*V + i, q*V + W_pq.rows[i][j]] =  (W_pq[i,j]**2)/(sumi[i]*sumj[j])
+                                   #pAB = (W_pq[i,j]+1)/S
+                                   #pA = sumi[i]
+                                   #pB = sumj[j]
+                                   #pmi = np.log2((pAB)/(pA*pB))
+                                   
+                                   strength = 1#W_pq[i,W_pq.rows[i][j]]#1#/len(W_pq.rows[i])#W_pq[i,W_pq.rows[i][j]]#np.max([np.log(W_pq[i,j]),0])
+                                   #pmi = 2**(pmi + np.log2(pAB))
+#                                   npmi = pmi/-np.log2(pAB)
+                                   #ppmi = 2**(pmi + np.log2(pAB))
+                                   #pmi = pAB/(pA*pB)
+                                   #print(ppmi,pAB*(pAB/(pA*pB)) )#(pAB/(pA*pB))/2**(-np.log2(pAB)) )
+                                   #print(pAB, pA, pB, pmi)
+                                   #ppmi = np.max([0, pmi])
+                                   self.W[p*V+i,q*V+W_pq.rows[i][j]] = strength
+                                   self.W[q*V+W_pq.rows[i][j], p*V+i] = strength
+
+                self.W = self.W.tocsr()
+                self.update_eig()
+                self.W.eliminate_zeros() 
+
+            else:
+                '''No explicit matrix...matmul will be done implicitly'''
+                self.WEIGHTS     = []
+                self.WEIGHTS_IDX = []
+                for p in range(K):
+                    weights_p = []
+                    weights_p_idx = []
+                    for q in range(K):
+                        W_pq = self.COUNTS[p*V:(p+1)*V, q*V:(q+1)*V]
+                        for i in range(len(W_pq.data)):
+                            if W_pq.data[i] > 2:
+                                W_pq.data[i] = 1
+                            else:
+                                W_pq.data[i] = 0
+                        W_pq.eliminate_zeros()
+                        W_pq.data = W_pq.data/300.0
+
+                        weights_p.append(W_pq)
+                        weights_p_idx.append(lil_matrix(W_pq).rows) #nonzero cell idxs for each row
+                    self.WEIGHTS_IDX.append(weights_p_idx)
+                    self.WEIGHTS.append(weights_p)
+
+
+
+
+    def expand(self, x):
+        D = len(self.Ds)
+        return np.hstack([x]*D)
+
+    def collapse(self, x, theta = None):
+        D = len(self.Ds)
+        K = self.K
+        V = len(self.vocab)
+        if theta == None:
+            theta = np.array([1.0/D]*D)
+        return np.array(theta.dot(x.reshape(D, K*V)))
+
+
+    def update_eig(self):
+        ei, ev = eigs(self.W.astype(np.float64), k =50)
+        self.ei = ei.real
+        self.ev = ev.real
+        e_max = sorted(self.ei)[::-1][0]
+        self.alpha = 1.01#e_max + 0.1*e_max
+        self.W.data /= e_max #+ 0.1*e_max
+
+
+    def print_eigenspectrum(self):
+        for i in range(len(self.ei)):
+            ei = self.ei[i]
+            ev = self.ev[:, i]
+
+            ev1 = ev[:self.N]
+            ev2 = ev[:self.N]
+            e1_sign = ""
+            e2_sign = ""
+            abs_min = np.abs(ev1.min())
+            abs_max = np.abs(ev1.max())
+            if abs_min > abs_max:
+                ev1 = -ev1 #flip 'er
+                e1_sign = " - "
+            else:
+                e1_sign = " + "
+
+            abs_min = np.abs(ev2.min())
+            abs_max = np.abs(ev2.max())
+            if abs_min > abs_max:
+                ev2 = -ev2 #flip 'er
+                e2_sign = " - "
+            else:
+                e2_sign = " + "
+
+
+            bank1 = sorted(zip(ev1, self.vocab))[::-1][:10]
+            bank2 = sorted(zip(ev2, self.vocab))[::-1][:10]
+            sts1, ws1 = zip(*bank1)
+            sts2, ws2 = zip(*bank2)
+            print(e1_sign, e2_sign, round(ei, 4), " ".join(ws1) + " | " + " ".join(ws2))
+
+
 
     def save_nonzero(self):
         self.E_nnz = lil_matrix(self.E).rows
@@ -282,25 +397,27 @@ class AssociativeNet(Model):
         from scipy.sparse.linalg import norm as norm_sp
         '''recurrence with stp (i.e., DEN)'''
         ###compute strengths for the initial input pattern in buffer
-        self.compute_sts()
-        self.sort_banks()
+        #self.compute_sts()
+        #self.sort_banks()
 
-        self.view_banks(5)
-        frames=  [deepcopy(self.strengths)]
+        #self.view_banks(5)
+        #frames=  [deepcopy(self.strengths)]
 
 
         vlens = [norm(self.echo_full)]
 
         print("Adding STP")
         ###compute the next state
-        x0 = self.alpha*self.echo_full #for STP
+        x0 = 1*self.echo_full #for STP
+        if self.multi_degree:
+            x0 = self.expand(x0)
         nnz0 = np.where(x0 != 0)[0]
         for ii in nnz0:
             for jj in nnz0:
-                self.W[ii, jj] += x0[ii]*x0[jj]
+                self.W[ii, jj] += self.alpha*x0[ii]*x0[jj]
 
         try: #this is here to ensure stp is taken back out in case of interruption..feel free to crt-c out
-            x = csr_matrix(1*self.echo_full)#1*self.echo_full
+            x = csr_matrix(1*x0, dtype=float128)#1*self.echo_full
             x_new = x.dot(self.W)
             vlen = float(norm_sp(x_new))
             vlens.append(vlen)
@@ -308,15 +425,15 @@ class AssociativeNet(Model):
             diff = norm_sp(x - x_new)
             count = 0
 
-            while(diff > self.eps):
+            while(diff > self.eps and count < self.maxiter):
                 count += 1
                 ###load buffer with new state
                 x = 1*x_new
-                self.echo_full = np.array(x.todense())[0]#1*x
-                self.compute_sts() #compute strengths with updated buffer
-                self.sort_banks()
-                self.view_banks(5)
-                frames.append(deepcopy(self.strengths))
+                #self.echo_full = np.array(x.todense())[0]#1*x
+                #self.compute_sts() #compute strengths with updated buffer
+                #self.sort_banks() #TODO decide how to save states during recurrence with multi-degree
+                #self.view_banks(5)
+                #frames.append(deepcopy(self.strengths))
 
                 ###compute the next state
                 x_new = x.dot(self.W) #took out implicit for now
@@ -330,25 +447,27 @@ class AssociativeNet(Model):
 
             for ii in nnz0:
                 for jj in nnz0:
-                    self.W[ii, jj] -= x0[ii]*x0[jj]
+                    self.W[ii, jj] -= self.alpha*x0[ii]*x0[jj]
                 
         except Exception as e:
             count = 0 #reset weights to before stp
             print(e)
             for ii in nnz0:
                 for jj in nnz0:
-                    self.W[ii, jj] -= x0[ii]*x0[jj]
+                    self.W[ii, jj] -= self.alpha*x0[ii]*x0[jj]
 
 
-
-        self.echo_full = np.array(x_new.todense())[0]#1*x_new
+        if self.multi_degree:
+            self.echo_full = self.collapse(np.array(x_new.todense())[0])
+        else:
+            self.echo_full = np.array(x_new.todense())[0]#1*x_new
 
         self.compute_sts() #compute strengths with updated buffer
         self.sort_banks()
         self.view_banks(5)
-        frames.append(deepcopy(self.strengths))
+        #frames.append(deepcopy(self.strengths))
 
-        self.frames = frames
+        #self.frames = frames
         self.vlens  = vlens
         self.count = count
 
