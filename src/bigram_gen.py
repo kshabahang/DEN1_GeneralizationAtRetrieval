@@ -29,7 +29,7 @@ def proj(a, v):
 
 if __name__ == "__main__":
 
-    N =16360#2**16
+    N =2**17#16360#2**16
 
     K = 2#2
 
@@ -51,11 +51,11 @@ if __name__ == "__main__":
                "gpu":False,
                "localist":True,
                "distributed":False,
-               "maxiter":1000,
+               "maxiter":100000,
                "explicit":True}
     ANet = AssociativeNet(hparams)
 
-    memory_path = sys.argv[1]
+    memory_path ="MIX" #sys.argv[1]
 
     NSamples = 100
 
@@ -83,15 +83,16 @@ if __name__ == "__main__":
     ANet.COUNTS = csr_matrix(C)
     del C
     print("Crunching out the weights...")
-    ANet.compute_weights(binaryMat=True)
-    ANet.nullvec = np.zeros((K*N))
+    ANet.compute_weights(binaryMat=False)
+    ANet.nullvec = np.zeros((K*V))
+    ANet.N = V
 
     if ANet.hparams["gpu"]:
         ANet.nullvec = ANet.nullvec.cuda()
     
     toLesion = True
 
-    pairs = "VB_RBR_2_RBR_VB PPRS_NN_2_PPR_NN IN_VBG_2_IN_VBP NNS_VBP_2_NN_VBP NN_VBZ_2_NN_VBP DT_NN_2_NN_DT JJ_NN_2_NN_JJ NN_IN_2_IN_NN PPR_VBP_2_PPRS_VBP".split()
+    pairs = "VB_RBR_2_RBR_VB PPRS_NN_2_PPR_NN IN_VBG_2_IN_VBP NNS_VBP_2_NN_VBP NN_VBZ_2_NN_VBP DT_NN_2_NN_DT JJ_NN_2_NN_JJ NN_IN_2_IN_NN PPR_VBP_2_PPRS_VBP".split()#[1:]
 
 
     if True: 
@@ -106,13 +107,24 @@ if __name__ == "__main__":
             print (pair_set)
              
 
-            f = open("../rsc/bigrams/" +grammatical[i] + ".txt", "r")
-            probes_g = f.readlines()
+            #f = open("../rsc/bigrams/" +grammatical[i] + ".txt", "r")
+            #probes_g = f.readlines()
+            #f.close()
+
+            #f = open("../rsc/bigrams/" +ungrammatical[i] + ".txt", "r")
+            #probes_ug = f.readlines()
+            #f.close()
+
+            f = open("../rsc/to_run_NOVELS"+ pairs[i] + ".txt", "r")
+            bgs = f.readlines()
             f.close()
 
-            f = open("../rsc/bigrams/" +ungrammatical[i] + ".txt", "r")
-            probes_ug = f.readlines()
-            f.close()
+            probes_g  = [] 
+            probes_ug = []
+            for l in range(len(bgs)):
+                 [corrA, corrB, incorrA, incorrB] = bgs[l].split()
+                 probes_g.append(corrA + " " + corrB)
+                 probes_ug.append(incorrA + " " + incorrB)
 
 
 
@@ -121,7 +133,7 @@ if __name__ == "__main__":
 
 
 
-            for k in range(NSamples):
+            for k in range(len(bgs)):
                 #(frq, [correct, incorrect]) = pair_items[k]
                 frq = 0
                 correct = probes_g[k]
@@ -170,21 +182,16 @@ if __name__ == "__main__":
                     cycles = len(ANet.frames)
             
                     if "vlens" not in scores[labels[i]]:
-                        scores[labels[i]]["vlens"] = [ANet.vlens]
+                        scores[labels[i]]["vlens"] = [ANet.vlens[-1]]
                         scores[labels[i]]["ncycles"] = [len(ANet.frames)]
-                        scores[labels[i]]["change"] = [change]
-                        scores[labels[i]]["terminal"] = [terminal]
                         scores[labels[i]]["probe"] = [probe]
                         scores[labels[i]]["freq"] = [frq]
-                        scores[labels[i]]["frames"] = [ANet.frames]
                     else:
-                        scores[labels[i]]["vlens"].append(ANet.vlens)
+                        scores[labels[i]]["vlens"].append(ANet.vlens[-1])
                         scores[labels[i]]["ncycles"].append(len(ANet.frames))
-                        scores[labels[i]]["change"].append(change)
-                        scores[labels[i]]["terminal"].append(terminal)
                         scores[labels[i]]["probe"].append(probe)                
                         scores[labels[i]]["freq"].append(frq)
-                        scores[labels[i]]["frames"].append(ANet.frames)
+
             
             
                 if toLesion: 
@@ -196,20 +203,12 @@ if __name__ == "__main__":
                         ANet.WEIGHTS[0][1][ANet.I[w1_c],ANet.I[w2_c]] = deepcopy(a2b)
                         ANet.WEIGHTS[1][0][ANet.I[w2_c],ANet.I[w1_c]] = deepcopy(b2a)
 
-
-            vlen_corr = np.array([scores['correct']['vlens'][i][-1] for i in range(len(scores['correct']['vlens']))])
-            vlen_incr = np.array([scores['incorrect']['vlens'][i][-1] for i in range(len(scores['incorrect']['vlens']))])
-
-            d = np.mean(vlen_corr - vlen_incr)/np.std(vlen_corr - vlen_incr)
-            print(d, np.mean(vlen_corr - vlen_incr))
-
-
             if toLesion:
                 print( "Lesioned")
             else:
                 print("Not lesioned")
 
-            f = open(root_mem_path + "/"+pair_set + "_output.pkl", "wb")
+            f = open(root_mem_path + "/"+pair_set + "_MIX.pkl", "wb")
             pickle.dump(scores, f)
             f.close()
 

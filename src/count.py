@@ -29,7 +29,7 @@ def proj(a, v):
 
 if __name__ == "__main__":
 
-    N =16360#2**16
+    N =2**17#16360#2**16
 
     K = 2
 
@@ -48,15 +48,20 @@ if __name__ == "__main__":
                "mode":"numpy",
                "feedback":"stp",
                "gpu":False,
+               "maxiter":100000,
                 "localist":True,
                 "init_weights":False,
                 "distributed":False,
-                "explicit":False}
+                "explicit":False,
+                "multiDegree":False}
     ANet = AssociativeNet(hparams)
 
     MODE = sys.argv[1]
 
     root_mem_path = "/home/ubuntu/LTM/DEN1_GeneralizationAtRetrieval/rsc"
+
+    #MAXDs = [5,10,15,20,50,100,200,300,500,1000]
+    MAXDs = [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100]
 
 
     if MODE == "init":
@@ -120,10 +125,22 @@ if __name__ == "__main__":
         print("Computing bi-gram counts...")
 #        C = np.zeros((K*V, K*V))
         C = lil_matrix((K*V, K*V), dtype=np.int64)
+
+        Ds = [lil_matrix((K*V, K*V), dtype=np.int64) for m in range(len(MAXDs))]
+
         pbar = ProgressBar(maxval=K**2).start()
         for k in range(K):
-            for l in range(K):
+            for l in range(k,K):
                 c = Counter([(corpus_int[i+k], corpus_int[i+l]) for i in range(len(corpus_int) - max(k, l) - 1)])
+                for m in range(len(MAXDs)): 
+                    degrees = np.zeros(V)
+                    for ((i1, i2), frq) in c.most_common():
+                        if i1 != i2 and degrees[i1] <= MAXDs[m] and degrees[i2] <= MAXDs[m]:
+                            Ds[m][int(k*V)+i1, int(l*V) + i2] = frq
+#                            D[int(l*V) + i2, int(k*V)+i1] = frq
+                            degrees[i1] += 1
+                            degrees[i2] += 1
+
                 idx = c.keys()
 #                C[k*V:(k+1)*V, l*V:(l+1)*V] = np.array(coo_matrix( (map( lambda i : c[i], idx) , 
 #                                                                       zip(*idx)), shape = (V, V)).todense())
@@ -132,7 +149,7 @@ if __name__ == "__main__":
                 for i in range(V):
                     for j in range(len(Ckl.rows[i])):
                         C[int(k*V)+i, int(l*V) + Ckl.rows[i][j]] = Ckl.data[i][j]
-
+                        C[int(l*V) + Ckl.rows[i][j], int(k*V)+i] = Ckl.data[i][j]
 
 
                 pbar.update(k*K + l+1)
@@ -146,6 +163,9 @@ if __name__ == "__main__":
 
         #np.savez("C", C)
         save_csr(csr_matrix(C), "C_{}_{}".format(IDX, CHU))
+        for i in range(len(MAXDs)):
+            save_csr(csr_matrix(Ds[i]), "D{}_{}_{}".format(MAXDs[i],IDX, CHU))
+            os.system("mv D{}_* {}/{}/".format(MAXDs[i], root_mem_path, memory_path))
 
         os.system("mv C_* {}/{}/".format(root_mem_path, memory_path))
 

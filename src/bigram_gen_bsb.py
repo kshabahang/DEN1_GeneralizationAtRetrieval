@@ -26,10 +26,31 @@ def load_csr(fpath, shape, dtype=np.float64, itype=np.int32):
 def proj(a, v):
     return (a.dot(v)/v.dot(v))*v
 
+class OBVGen(object):
+    def __init__(self, k):
+        '''constructs 2**k orthogonal bi-polar vectors'''
+        self.N = 2**k
+        v = np.array([1])
+        self.E = []
+        self.expand(v)
+
+    def expand(self, v):
+        v1 = np.hstack([v,v])
+        v2 = np.hstack([v,-v])
+        if len(v1) < self.N:
+            self.expand(v1)
+            self.expand(v2)
+        else:
+            self.E.append(v1)
+            self.E.append(v2)
+
 
 if __name__ == "__main__":
 
-    N =1024 #16360#2**16
+
+
+
+    N = 2**14#1024 #16360#2**16
 
     K = 2
 
@@ -62,7 +83,7 @@ if __name__ == "__main__":
 
 
 
-    NSamples = 150
+    NSamples = 20
 
     root_mem_path = "/home/ubuntu/LTM/DEN1_GeneralizationAtRetrieval/rsc"
 
@@ -74,7 +95,10 @@ if __name__ == "__main__":
 
 
     if hparams["distributed"]:
-        ANet.E = list(np.load(root_mem_path + "/{}/E{}.npy".format(memory_path, N)))
+        print("Constructing e-vecs")
+        obv = OBVGen(14)
+        #ANet.E = list(np.load(root_mem_path + "/{}/E{}.npy".format(memory_path, N)))
+        ANet.E = obv.E
 
     sparsifyEVECS = False
     if sparsifyEVECS:
