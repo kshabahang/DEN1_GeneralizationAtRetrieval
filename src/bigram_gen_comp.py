@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
     
     hparams = {"bank_labels":["t-{}".format(i) for i in range(K)],
-               "eps":1e-9, 
+               "eps":1e-10, 
                "eta":1,
                "alpha":1,
                "beta":1,
@@ -55,10 +55,10 @@ if __name__ == "__main__":
                "distributed":False,
                "maxiter":1000,
                "explicit":True,
-               "multiDegree":True}
+               "multiDegree":False}
     ANet = AssociativeNet(hparams)
 
-    memory_path ="TASA" #sys.argv[1]
+    memory_path ="NOVELS" #sys.argv[1]
 
     NSamples = 100
 
@@ -85,7 +85,8 @@ if __name__ == "__main__":
         C[:, :] += load_csr(root_mem_path + "/{}/C_{}_{}".format(memory_path, IDX, totalChunks), (V*K, V*K), dtype=np.int64)
 
 
-    maxds =[5,10,15,20,50,100,200,300,500] 
+    #maxds =[5,10,15,20,50,100,200,300,500,1000]
+    maxds = [5]#[5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100]
     Ds = []
     for i in range(len(maxds)):
         MAXD = maxds[i]
@@ -178,12 +179,27 @@ if __name__ == "__main__":
                 if toLesion:
                     #lesion
                     if ANet.hparams['explicit']:
-                        a2b = deepcopy(ANet.W[ANet.I[w1_c],ANet.N + ANet.I[w2_c]])
-                        b2a = deepcopy(ANet.W[ANet.N + ANet.I[w2_c],ANet.I[w1_c]])
-                        ANet.W[ANet.I[w1_c],ANet.N + ANet.I[w2_c]] = 0
-                        ANet.W[ANet.N + ANet.I[w2_c],ANet.I[w1_c]] = 0
-                        assert(ANet.W[ANet.I[w1_c],ANet.N + ANet.I[w2_c]] == 0)
-                        assert(ANet.W[ANet.N + ANet.I[w2_c],ANet.I[w1_c]] == 0)
+                        if ANet.multi_degree:
+                            a2bs = []
+                            b2as = []
+                            K = ANet.K
+                            V = len(ANet.vocab)
+                            for l in range(len(ANet.Ds)):
+                                i_shift = l*K*V
+                                a2b = deepcopy(ANet.W[i_shift + ANet.I[w1_c],i_shift + ANet.N + ANet.I[w2_c]])
+                                b2a = deepcopy(ANet.W[i_shift + ANet.N + ANet.I[w2_c], i_shift + ANet.I[w1_c]])
+                                a2bs.append(a2b)
+                                b2as.append(b2a)
+                                ANet.W[i_shift + ANet.I[w1_c],i_shift + ANet.N + ANet.I[w2_c]] = 0
+                                ANet.W[i_shift + ANet.N + ANet.I[w2_c],i_shift + ANet.I[w1_c]] = 0
+
+                        else:
+                            a2b = deepcopy(ANet.W[ANet.I[w1_c],ANet.N + ANet.I[w2_c]])
+                            b2a = deepcopy(ANet.W[ANet.N + ANet.I[w2_c],ANet.I[w1_c]])
+                            ANet.W[ANet.I[w1_c],ANet.N + ANet.I[w2_c]] = 0
+                            ANet.W[ANet.N + ANet.I[w2_c],ANet.I[w1_c]] = 0
+                            assert(ANet.W[ANet.I[w1_c],ANet.N + ANet.I[w2_c]] == 0)
+                            assert(ANet.W[ANet.N + ANet.I[w2_c],ANet.I[w1_c]] == 0)
                     else:
                         a2b = deepcopy(ANet.WEIGHTS[0][1][ANet.I[w1_c],ANet.I[w2_c]]) ###lesion both ways
                         b2a = deepcopy(ANet.WEIGHTS[1][0][ANet.I[w2_c],ANet.I[w1_c]])
@@ -222,8 +238,18 @@ if __name__ == "__main__":
                 if toLesion: 
                     #reset
                     if ANet.hparams['explicit']:
-                        ANet.W[ANet.I[w1_c],ANet.N + ANet.I[w2_c]] = deepcopy(a2b)
-                        ANet.W[ANet.N + ANet.I[w2_c],ANet.I[w1_c]] = deepcopy(b2a)
+                        if ANet.multi_degree:
+                            K = ANet.K
+                            V = len(ANet.vocab)
+                            for l in range(len(ANet.Ds)):
+                                i_shift = l*K*V
+                                a2b = deepcopy(a2bs[l])
+                                b2a = deepcopy(b2as[l])
+                                ANet.W[i_shift + ANet.I[w1_c],i_shift + ANet.N + ANet.I[w2_c]] = a2b
+                                ANet.W[i_shift + ANet.N + ANet.I[w2_c],i_shift + ANet.I[w1_c]] = b2a
+                        else:
+                            ANet.W[ANet.I[w1_c],ANet.N + ANet.I[w2_c]] = deepcopy(a2b)
+                            ANet.W[ANet.N + ANet.I[w2_c],ANet.I[w1_c]] = deepcopy(b2a)
                     else:
                         ANet.WEIGHTS[0][1][ANet.I[w1_c],ANet.I[w2_c]] = deepcopy(a2b)
                         ANet.WEIGHTS[1][0][ANet.I[w2_c],ANet.I[w1_c]] = deepcopy(b2a)

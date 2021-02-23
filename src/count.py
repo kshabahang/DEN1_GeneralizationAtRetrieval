@@ -60,7 +60,8 @@ if __name__ == "__main__":
 
     root_mem_path = "/home/ubuntu/LTM/DEN1_GeneralizationAtRetrieval/rsc"
 
-    MAXDs = [5,10,15,20,50,100,200,300,500]
+    #MAXDs = [5,10,15,20,50,100,200,300,500,1000]
+    MAXDs = [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100]
 
 
     if MODE == "init":
