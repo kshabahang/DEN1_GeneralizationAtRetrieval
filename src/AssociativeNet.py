@@ -1,5 +1,5 @@
 import sys
-
+import pickle
 from itertools import combinations, product
 #import cv2
 import numpy as np
@@ -463,7 +463,7 @@ class AssociativeNet(Model):
         self.get_top_connect() 
     
 
-        vlens = [norm(self.echo_full)]
+        vlens = [norm(self.echo_full), norm(self.echo_full[:self.V]), norm(self.echo_full[self.V:])]
 
         print("Adding STP")
         ###compute the next state
@@ -479,7 +479,9 @@ class AssociativeNet(Model):
             x = csr_matrix(1*x0, dtype=float128)#1*self.echo_full
             x_new = x.dot(self.W)
             vlen = float(norm_sp(x_new))
-            vlens.append(vlen)
+            vlen1= float(norm_sp(x_new[0, :self.V]))
+            vlen2= float(norm_sp(x_new[0,self.V:]))
+            vlens.append((vlen, vlen1, vlen2))
             x_new = x_new/vlen
             diff = norm_sp(x - x_new)
             count = 0
@@ -501,8 +503,12 @@ class AssociativeNet(Model):
 
                 ###compute the next state
                 x_new = x.dot(self.W) #took out implicit for now
+
                 vlen = float(norm_sp(x_new))
-                vlens.append(vlen)
+                vlen1= float(norm_sp(x_new[0, :self.V]))
+                vlen2= float(norm_sp(x_new[0,self.V:]))
+                vlens.append((vlen, vlen1, vlen2))
+
                 frames.append(deepcopy(np.array(x_new.todense())[0]))
                 x_new = x_new/vlen
 
@@ -552,7 +558,7 @@ class AssociativeNet(Model):
 
             self.V = len(self.vocab)
 
-    def get_top_connect(self, top=10):
+    def get_top_connect(self, top=50):
         V = self.V
 
         bank1 = np.argsort(self.echo_full[:V])[::-1][:top]
@@ -560,14 +566,22 @@ class AssociativeNet(Model):
         weights = np.zeros((top,top))
         ws1 =[]
         ws2 =[]
+        sts1=[]
+        sts2=[]
         for i in range(top):
             ws1.append(self.vocab[bank1[i]])
             ws2.append(self.vocab[bank2[i]])
+            sts1.append(self.echo_full[bank1[i]])
+            sts2.append(self.echo_full[V + bank2[i]])
             for j in range(top):
                 weights[i,j] = self.W[bank1[i], V + bank2[j]]
 
-        self.top_weights.append((ws1, ws2, weights))
+        self.top_weights.append((ws1, ws2, sts1, sts2, weights, self.vlens))
 
+    def save_top_weights(self, name_tag):
+        f = open("top_weights{}.pkl".format(name_tag), "wb")
+        pickle.dump(self.top_weights, f)
+        f.close()
 
 
 
