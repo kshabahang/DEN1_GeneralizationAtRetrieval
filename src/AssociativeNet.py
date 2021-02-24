@@ -172,7 +172,7 @@ class AssociativeNet(Model):
                 self.W = lil_matrix(self.COUNTS.shape, dtype=float128)#np.zeros(self.COUNTS.shape)#
                 for p in range(K): #TODO speed this up by exploiting the symmetry
                    for q in range(p, K):
-                       W_pq = self.COUNTS[p*V:(p+1)*V, q*V:(q+1)*V]
+                       W_pq = self.Ds[0][p*V:(p+1)*V, q*V:(q+1)*V]
                        print(W_pq.shape)
                        W_pq.eliminate_zeros()
                        if binaryMat:
@@ -195,7 +195,7 @@ class AssociativeNet(Model):
 
 
                            for i in range(len(W_pq.data)):
-                               if W_pq.data[i] > 2:
+                               if W_pq.data[i] > 3:
                                    W_pq.data[i] = 1
                                else:
                                    W_pq.data[i] = 0                              
@@ -209,24 +209,25 @@ class AssociativeNet(Model):
 
                            sumi=(np.array(W_pq.sum(axis=1).T)[0]+1)/S
                            sumj=(np.array(W_pq.sum(axis=0))[0]+1)/S
-                           for i in range(V):
-                               for j in range(len(W_pq.rows[i])):
-                                   #self.W[p*V + i, q*V + W_pq.rows[i][j]] =  (W_pq[i,j]**2)/(sumi[i]*sumj[j])
-                                   #pAB = (W_pq[i,j]+1)/S
-                                   #pA = sumi[i]
-                                   #pB = sumj[j]
-                                   #pmi = np.log2((pAB)/(pA*pB))
-                                   
-                                   #strength = 1#W_pq[i,W_pq.rows[i][j]]#1#/len(W_pq.rows[i])#W_pq[i,W_pq.rows[i][j]]#np.max([np.log(W_pq[i,j]),0])
-                                   #pmi = 2**(pmi + np.log2(pAB))
-#                                   npmi = pmi/-np.log2(pAB)
-                                   #ppmi = 2**(pmi + np.log2(pAB))
-                                   #pmi = pAB/(pA*pB)
-                                   #print(ppmi,pAB*(pAB/(pA*pB)) )#(pAB/(pA*pB))/2**(-np.log2(pAB)) )
-                                   #print(pAB, pA, pB, pmi)
-                                   #ppmi = np.max([0, pmi])
-                                   self.W[p*V+i,q*V+W_pq.rows[i][j]] = 1.0/nnzsj[W_pq.rows[i][j]]
-                                   self.W[q*V+W_pq.rows[i][j], p*V+i] = 1.0/nnzsi[i]
+                           if p != q:
+                            for i in range(V):
+                                for j in range(len(W_pq.rows[i])):
+                                    #self.W[p*V + i, q*V + W_pq.rows[i][j]] =  (W_pq[i,j]**2)/(sumi[i]*sumj[j])
+                                    #pAB = (W_pq[i,j]+1)/S
+                                    #pA = sumi[i]
+                                    #pB = sumj[j]
+                                    #pmi = np.log2((pAB)/(pA*pB))
+                                    
+                                    #strength = 1#W_pq[i,W_pq.rows[i][j]]#1#/len(W_pq.rows[i])#W_pq[i,W_pq.rows[i][j]]#np.max([np.log(W_pq[i,j]),0])
+                                    #pmi = 2**(pmi + np.log2(pAB))
+#                                    npmi = pmi/-np.log2(pAB)
+                                    #ppmi = 2**(pmi + np.log2(pAB))
+                                    #pmi = pAB/(pA*pB)
+                                    #print(ppmi,pAB*(pAB/(pA*pB)) )#(pAB/(pA*pB))/2**(-np.log2(pAB)) )
+                                    #print(pAB, pA, pB, pmi)
+                                    #ppmi = np.max([0, pmi])
+                                    self.W[p*V+i,q*V+W_pq.rows[i][j]] = 1.0/nnzsj[W_pq.rows[i][j]]
+                                    self.W[q*V+W_pq.rows[i][j], p*V+i] = 1.0/nnzsi[i]
 
                 self.W = self.W.tocsr()
                 self.update_eig()
@@ -463,7 +464,7 @@ class AssociativeNet(Model):
         self.get_top_connect() 
     
 
-        vlens = [norm(self.echo_full), norm(self.echo_full[:self.V]), norm(self.echo_full[self.V:])]
+        vlens = [(norm(self.echo_full), norm(self.echo_full[:self.V]), norm(self.echo_full[self.V:]))]
 
         print("Adding STP")
         ###compute the next state
@@ -558,7 +559,7 @@ class AssociativeNet(Model):
 
             self.V = len(self.vocab)
 
-    def get_top_connect(self, top=50):
+    def get_top_connect(self, top=20):
         V = self.V
 
         bank1 = np.argsort(self.echo_full[:V])[::-1][:top]
