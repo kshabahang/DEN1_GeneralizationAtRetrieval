@@ -55,10 +55,10 @@ if __name__ == "__main__":
                "distributed":False,
                "maxiter":1000,
                "explicit":True,
-               "multiDegree":False}
+               "sparse":False}
     ANet = AssociativeNet(hparams)
 
-    memory_path ="NOVELS" #sys.argv[1]
+    memory_path ="TOY" #sys.argv[1]
 
     NSamples = 100
 
@@ -69,6 +69,7 @@ if __name__ == "__main__":
     ANet.vocab = [vocab[i].strip() for i in range(len(vocab))]
     f.close()
     ANet.I = {ANet.vocab[i]:i for i in range(len(vocab))}
+    ANet.V = len(vocab)
 
     f = open("log.out", "w")
     f.write("Let's go..." +"\n")
@@ -102,10 +103,12 @@ if __name__ == "__main__":
 
     ANet.COUNTS = csr_matrix(C)
     del C
+    ##drop low freq terms
+    ANet.prune(min_wf = 3)
     print("Crunching out the weights...")
     ANet.compute_weights(binaryMat=False)
-    ANet.nullvec = np.zeros((K*V))
-    ANet.N = V
+    ANet.nullvec = np.zeros((K*ANet.V))
+    ANet.N = ANet.V
 
     if ANet.hparams["gpu"]:
         ANet.nullvec = ANet.nullvec.cuda()
@@ -177,37 +180,7 @@ if __name__ == "__main__":
 
             if w1_c in ANet.I and w2_c in ANet.I and w1_i in ANet.I and w2_i in ANet.I:                
                 if toLesion:
-                    #lesion
-                    if ANet.hparams['explicit']:
-                        if ANet.multi_degree:
-                            a2bs = []
-                            b2as = []
-                            K = ANet.K
-                            V = len(ANet.vocab)
-                            for l in range(len(ANet.Ds)):
-                                i_shift = l*K*V
-                                a2b = deepcopy(ANet.W[i_shift + ANet.I[w1_c],i_shift + ANet.N + ANet.I[w2_c]])
-                                b2a = deepcopy(ANet.W[i_shift + ANet.N + ANet.I[w2_c], i_shift + ANet.I[w1_c]])
-                                a2bs.append(a2b)
-                                b2as.append(b2a)
-                                ANet.W[i_shift + ANet.I[w1_c],i_shift + ANet.N + ANet.I[w2_c]] = 0
-                                ANet.W[i_shift + ANet.N + ANet.I[w2_c],i_shift + ANet.I[w1_c]] = 0
-
-                        else:
-                            a2b = deepcopy(ANet.W[ANet.I[w1_c],ANet.N + ANet.I[w2_c]])
-                            b2a = deepcopy(ANet.W[ANet.N + ANet.I[w2_c],ANet.I[w1_c]])
-                            ANet.W[ANet.I[w1_c],ANet.N + ANet.I[w2_c]] = 0
-                            ANet.W[ANet.N + ANet.I[w2_c],ANet.I[w1_c]] = 0
-                            assert(ANet.W[ANet.I[w1_c],ANet.N + ANet.I[w2_c]] == 0)
-                            assert(ANet.W[ANet.N + ANet.I[w2_c],ANet.I[w1_c]] == 0)
-                    else:
-                        a2b = deepcopy(ANet.WEIGHTS[0][1][ANet.I[w1_c],ANet.I[w2_c]]) ###lesion both ways
-                        b2a = deepcopy(ANet.WEIGHTS[1][0][ANet.I[w2_c],ANet.I[w1_c]])
-                        ANet.WEIGHTS[0][1][ANet.I[w1_c],ANet.I[w2_c]] = 0
-                        ANet.WEIGHTS[1][0][ANet.I[w2_c],ANet.I[w1_c]] = 0
-        
-                        assert(ANet.WEIGHTS[0][1][ANet.I[w1_c], ANet.I[w2_c]] == 0) 
-                        assert(ANet.WEIGHTS[1][0][ANet.I[w2_c], ANet.I[w1_c]] == 0)
+                    ANet - (w1_c, w2_c)
         
                 for i in range(len(probes)):
                     probe = probes[i]
@@ -232,27 +205,10 @@ if __name__ == "__main__":
                         #scores[labels[i]]["ncycles"].append(len(ANet.frames))
                         scores[labels[i]]["probe"].append(probe)                
                         scores[labels[i]]["freq"].append(frq)
+ 
+                if toLesion:
+                    ~ ANet
 
-        
-        
-                if toLesion: 
-                    #reset
-                    if ANet.hparams['explicit']:
-                        if ANet.multi_degree:
-                            K = ANet.K
-                            V = len(ANet.vocab)
-                            for l in range(len(ANet.Ds)):
-                                i_shift = l*K*V
-                                a2b = deepcopy(a2bs[l])
-                                b2a = deepcopy(b2as[l])
-                                ANet.W[i_shift + ANet.I[w1_c],i_shift + ANet.N + ANet.I[w2_c]] = a2b
-                                ANet.W[i_shift + ANet.N + ANet.I[w2_c],i_shift + ANet.I[w1_c]] = b2a
-                        else:
-                            ANet.W[ANet.I[w1_c],ANet.N + ANet.I[w2_c]] = deepcopy(a2b)
-                            ANet.W[ANet.N + ANet.I[w2_c],ANet.I[w1_c]] = deepcopy(b2a)
-                    else:
-                        ANet.WEIGHTS[0][1][ANet.I[w1_c],ANet.I[w2_c]] = deepcopy(a2b)
-                        ANet.WEIGHTS[1][0][ANet.I[w2_c],ANet.I[w1_c]] = deepcopy(b2a)
 
         if toLesion:
             print( "Lesioned")

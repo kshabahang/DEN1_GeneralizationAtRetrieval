@@ -53,7 +53,7 @@ if __name__ == "__main__":
                 "init_weights":False,
                 "distributed":False,
                 "explicit":False,
-                "multiDegree":False}
+                "sparse":False}
     ANet = AssociativeNet(hparams)
 
     MODE = sys.argv[1]
