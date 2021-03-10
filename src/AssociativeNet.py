@@ -1,4 +1,3 @@
-from multipledispatch import dispatch
 import sys
 import pickle
 from itertools import combinations, product
@@ -106,7 +105,11 @@ class AssociativeNet(Model):
             bank_k = []
             if self.hparams["localist"]:
                 for i in range(len(self.vocab)):
-                    bank_k.append(np.abs(self.echo_full[k*self.N + i]))
+                    #bank_k.append(np.abs(self.echo_full[k*self.N + i]))
+                    bank_k.append(self.echo_full[k*self.N + i])
+                    #sts = 1*self.echo_full[k*self.N + i]
+                    #sts = sts.clip(min=0)
+                    #bank_k.append(sts)
                 banks += bank_k
             elif self.hparams["distributed"]:
                 for i in range(len(self.vocab)):
@@ -129,39 +132,60 @@ class AssociativeNet(Model):
                 self.W = lil_matrix(self.COUNTS.shape, dtype=float128)#np.zeros(self.COUNTS.shape)#
                 for p in range(K): #TODO speed this up by exploiting the symmetry
                    for q in range(p, K):
-                       W_pq = self.COUNTS[p*V:(p+1)*V, q*V:(q+1)*V]
+                       C_pq = self.COUNTS[p*V:(p+1)*V, q*V:(q+1)*V]
                        #W_pq = self.Ds[0][p*V:(p+1)*V, q*V:(q+1)*V]
                        D_pq = self.Ds[0][p*V:(p+1)*V, q*V:(q+1)*V].tolil()
-                       print(W_pq.shape)
-                       W_pq.eliminate_zeros()
+                       print(C_pq.shape)
+                       C_pq.eliminate_zeros()
                        if binaryMat:
-                           for i in range(len(W_pq.data)):
-                               if W_pq.data[i] > 2:
-                                   W_pq.data[i] = 1
+                           for i in range(len(C_pq.data)):
+                               if C_pq.data[i] > 2:
+                                   C_pq.data[i] = 1
                                else:
-                                   W_pq.data[i] = 0
-                           W_pq.eliminate_zeros()
-                           W_pq = W_pq.tolil()
+                                   C_pq.data[i] = 0
+                           C_pq.eliminate_zeros()
+                           C_pq = W_pq.tolil()
                            for i in range(V):
-                               for j in range(len(W_pq.rows[i])):
-                                   self.W[p*V + i, q*V + W_pq.rows[i][j]] = W_pq.data[i][j]#/len(W_pq.rows[i])
-                                   self.W[q*V + W_pq.rows[i][j], p*V + i] = W_pq.data[i][j]#/len(W_pq.rows[i])
+                               for j in range(len(C_pq.rows[i])):
+                                   self.W[p*V + i, q*V + W_pq.rows[i][j]] = C_pq.data[i][j]#/len(W_pq.rows[i])
+                                   self.W[q*V + W_pq.rows[i][j], p*V + i] = C_pq.data[i][j]#/len(W_pq.rows[i])
                        else:
+                           alpha = 1 #add-1 Laplacian
+                           logk = np.log2(7)
+
+
                            #experimental: this is for exploring new normalizations
-                           nnzsi = W_pq.getnnz(axis=1)
-                           nnzsj = W_pq.getnnz(axis=0)
-                           print(W_pq.nnz)
+                           #nnzsi = C_pq.getnnz(axis=1)
+                           #nnzsj = C_pq.getnnz(axis=0)
+                           print(C_pq.nnz)
 
 
-                           for i in range(len(W_pq.data)):
-                               if W_pq.data[i] > 2:
-                                   W_pq.data[i] = 1
-                               else:
-                                   W_pq.data[i] = 0                              
-                           W_pq.eliminate_zeros()
+                           #for i in range(len(C_pq.data)):
+                           #    if C_pq.data[i] > 2:
+                           #        C_pq.data[i] = 1
+                           #    else:
+                           #        C_pq.data[i] = 0                              
+                           #C_pq.eliminate_zeros() 
+
+                           T = C_pq.sum()
+                           Pi = (np.array(C_pq.sum(axis=1).T)[0] + alpha*V)/(T + alpha*(V**2))
+                           Pj = (np.array(C_pq.sum(axis=0))[0] + alpha*V)/(T + alpha*(V**2))
+                           P_pq = (C_pq.todense() + alpha)/(T + alpha*(V**2))
+                           weights = np.log2(np.diag(1.0/Pi).dot(P_pq.dot(np.diag(1.0/Pj)))) - logk#/-np.log2(P_pq)
+                           weights.clip(min=0, out=weights)
+
+                           if p != q:
+                               for i in range(V):
+                                   weights -= np.eye(V)
+
+                           weights=  csr_matrix(weights)
+
+                           self.W[p*V:(p+1)*V, q*V:(q+1)*V] = weights
+                           self.W[q*V:(q+1)*V, p*V:(p+1)*V] = weights.T #global symmetry
 
 
-                           W_pq = W_pq.tolil()
+
+                           #W_pq = W_pq.tolil()
                            
 
                            #S = W_pq.sum()
@@ -169,37 +193,60 @@ class AssociativeNet(Model):
                            #sumi=(np.array(W_pq.sum(axis=1).T)[0]+1)/S
                            #sumj=(np.array(W_pq.sum(axis=0))[0]+1)/S
                            #if p != q:
-                           if True:
-                            for i in range(V):
-                                for j in range(len(W_pq.rows[i])):
-                                    self.W[p*V+i,q*V+W_pq.rows[i][j]] = 1.0/nnzsj[W_pq.rows[i][j]]
-                                    self.W[q*V+W_pq.rows[i][j], p*V+i] = 1.0/nnzsi[i]
-                                #for j in range(len(D_pq.rows[i])):
-                                #    self.W[p*V+i,q*V+D_pq.rows[i][j]] = 1 
-                                #    self.W[q*V+D_pq.rows[i][j], p*V+i] = 1
+                           #if True:
+                           # for i in range(V):
+                           #     for j in range(len(W_pq.rows[i])):
+                           #         self.W[p*V+i,q*V+W_pq.rows[i][j]] = 1.0/nnzsj[W_pq.rows[i][j]]
+                           #         self.W[q*V+W_pq.rows[i][j], p*V+i] = 1.0/nnzsi[i]
+                           #     #for j in range(len(D_pq.rows[i])):
+                           #     #    self.W[p*V+i,q*V+D_pq.rows[i][j]] = 1 
+                           #     #    self.W[q*V+D_pq.rows[i][j], p*V+i] = 1
 
 
                 self.W = self.W.tocsr()
-                self.update_eig()
+                #self.update_eig()
                 self.W.eliminate_zeros() 
             else: #dense
                 self.W = np.zeros(self.COUNTS.shape)
-                alpha = 1 #add-1 Laplacian
-                for p in range(K): #TODO speed this up by exploiting the symmetry
-                   for q in range(p, K):
+                alpha = 0.01 #add-1 Laplacian
+                #logk = np.log2(7)
+                for p in range(K): 
+                   for q in range(p, K): #we can exploit the symmetry here
                        print(p, q)
-                       C_pq = np.array(self.COUNTS[p*V:(p+1)*V, q*V:(q+1)*V].todense()) + alpha
+                       C_pq = self.COUNTS[p*V:(p+1)*V, q*V:(q+1)*V]
+
+                       #nnzsi = C_pq.getnnz(axis=1)
+                       #nnzsj = C_pq.getnnz(axis=0)
                        T = C_pq.sum()
-                       P_pq = C_pq / T
-                       P_i = P_pq.sum(axis=1) 
-                       P_j = P_pq.sum(axis=0)
-                       PMI =  np.log(P_pq/np.outer(P_i, P_j)) 
-                       self.W[p*V:(p+1)*V, q*V:(q+1)*V] = PMI
-                       self.W[q*V:(q+1)*V, p*V:(p+1)*V] = PMI.T
-                del PMI
-                del P_pq
+                       Pi = (np.array(C_pq.sum(axis=1).T)[0] + alpha*V)/(T + alpha*(V**2))
+                       Pj = (np.array(C_pq.sum(axis=0))[0] + alpha*V)/(T + alpha*(V**2))
+                       P_pq = (C_pq.todense() + alpha)/(T + alpha*(V**2))
+                       weights = np.log2(np.diag(1.0/Pi).dot(P_pq.dot(np.diag(1.0/Pj))))# - logk#/-np.log2(P_pq)
+                       if p != q:
+                           for i in range(V):
+                               if weights[i,i] > 0:
+                                weights[i,i] *= -1
+                       print("T = {}".format(T))
+                       #weights.clip(min=0, out=weights)
+                       #weights = C_pq.todense() - np.outer(np.array(C_pq.sum(axis=0))[0]/T, C_pq.sum(axis=1))
+                       #mu_j = weights.mean(axis=1)
+                       #sig_j= weights.std(axis=1)
+                       #weights = (weights - mu_j)/sig_j
+                       #for i in range(V):
+                       #    weights[i][i] = 0
+                       #mu_i = weights.mean(axis=1)
+                       #sig_i = weights.std(axis=1)
+                       #weights = ((weights.T - mu_i)/sig_i).T
+
+                       #weights = np.diag(1.0/np.log2(nnzsi + 1e-7)).dot(weights.dot(np.diag(1.0/np.log2(nnzsj + 1e-7))))
+                       #for i in range(V):
+                       #    weights[i][i] = 0
+                       self.W[p*V:(p+1)*V, q*V:(q+1)*V] = weights
+                       self.W[q*V:(q+1)*V, p*V:(p+1)*V] = weights.T #global symmetry
+                del weights
+                #del P_pq
                 del C_pq
-                self.update_eig()
+                #self.update_eig()
                 
         else:
             '''No explicit matrix...matmul will be done implicitly'''
@@ -255,7 +302,9 @@ class AssociativeNet(Model):
         if self.hparams["sparse"]:
             ei, ev = eigs(self.W.astype(np.float64), k =50)
         else:
-            ei, ev = eig(self.W)
+            ei, ev = eigh(self.W)
+            ei = ei[::-1]
+            ev = ev[:, ::-1]
         self.ei = ei.real
         self.ev = ev.real
         e_max = sorted(self.ei)[::-1][0]
@@ -272,21 +321,21 @@ class AssociativeNet(Model):
             ev2 = ev[self.N:]
             e1_sign = ""
             e2_sign = ""
-            abs_min = np.abs(ev1.min())
-            abs_max = np.abs(ev1.max())
-            if abs_min > abs_max:
-                ev1 = -ev1 
-                e1_sign = " - "
-            else:
-                e1_sign = " + "
+            #abs_min = np.abs(ev1.min())
+            #abs_max = np.abs(ev1.max())
+            #if abs_min > abs_max:
+            #    ev1 = -ev1 
+            #    e1_sign = " - "
+            #else:
+            #    e1_sign = " + "
 
-            abs_min = np.abs(ev2.min())
-            abs_max = np.abs(ev2.max())
-            if abs_min > abs_max:
-                ev2 = -ev2 
-                e2_sign = " - "
-            else:
-                e2_sign = " + "
+            #abs_min = np.abs(ev2.min())
+            #abs_max = np.abs(ev2.max())
+            #if abs_min > abs_max:
+            #    ev2 = -ev2 
+            #    e2_sign = " - "
+            #else:
+            #    e2_sign = " + "
 
 
             bank1 = sorted(zip(ev1, self.vocab))[::-1][:10]
@@ -489,7 +538,7 @@ class AssociativeNet(Model):
                 frames.append(deepcopy(x_new ))
                 x_new = x_new/vlen
 
-                diff =  float(norm_sp(x - x_new))
+                diff =  float(norm(x - x_new))
 
 
             for ii in nnz0:
@@ -704,7 +753,8 @@ class AssociativeNet(Model):
 
             #print bank_data
             for j in range(len(bank_data[0][:k])):
-                if bank_data[1][j]  >= 0.00000000001:
+                #if bank_data[1][j]  >= 0.00000000001:
+                if True:
                     s += '%10s %5f ' % (bank_data[0][j], bank_data[1][j])
             to_print.append(bank_labels[i] + ' ' +  s)
         if mute:

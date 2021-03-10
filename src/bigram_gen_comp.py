@@ -55,10 +55,10 @@ if __name__ == "__main__":
                "distributed":False,
                "maxiter":1000,
                "explicit":True,
-               "sparse":False}
+               "sparse":True}
     ANet = AssociativeNet(hparams)
 
-    memory_path ="TOY" #sys.argv[1]
+    memory_path ="TASA" #sys.argv[1]
 
     NSamples = 100
 
@@ -103,10 +103,15 @@ if __name__ == "__main__":
 
     ANet.COUNTS = csr_matrix(C)
     del C
+    #sys.exit()
     ##drop low freq terms
-    ANet.prune(min_wf = 3)
+    ANet.prune(min_wf = 50)
     print("Crunching out the weights...")
     ANet.compute_weights(binaryMat=False)
+    ANet.update_eig()
+    #e_max = 75.4832 #change this if you change the learning rule
+    #ANet.alpha = 1.001
+    #ANet.W /= e_max
     ANet.nullvec = np.zeros((K*ANet.V))
     ANet.N = ANet.V
 
@@ -207,7 +212,7 @@ if __name__ == "__main__":
                         scores[labels[i]]["freq"].append(frq)
  
                 if toLesion:
-                    ~ ANet
+                    ~ ANet #reset
 
 
         if toLesion:
@@ -218,7 +223,7 @@ if __name__ == "__main__":
         corr_lens = np.array(corr_lens)
         incorr_lens = np.array(incorr_lens)
         print("Is symmetric: ", np.sum(np.abs((ANet.W - ANet.W.T).data)) == 0)
-        ANet.print_eigenspectrum()
+        #ANet.print_eigenspectrum()
         print("meanCorr meanIncorr stdCorr stdIncorr meanDiff stdDiff")
         print(np.mean(corr_lens), np.mean(incorr_lens), np.std(corr_lens), np.std(incorr_lens), (corr_lens - incorr_lens).mean(), (corr_lens - incorr_lens).std(), (corr_lens - incorr_lens).mean()/(corr_lens - incorr_lens).std())
 
