@@ -105,8 +105,8 @@ class AssociativeNet(Model):
             bank_k = []
             if self.hparams["localist"]:
                 for i in range(len(self.vocab)):
-                    #bank_k.append(np.abs(self.echo_full[k*self.N + i]))
-                    bank_k.append(self.echo_full[k*self.N + i])
+                    bank_k.append(np.abs(self.echo_full[k*self.N + i]))
+                    #bank_k.append(self.echo_full[k*self.N + i])
                     #sts = 1*self.echo_full[k*self.N + i]
                     #sts = sts.clip(min=0)
                     #bank_k.append(sts)

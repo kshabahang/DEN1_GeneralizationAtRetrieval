@@ -58,8 +58,9 @@ if __name__ == "__main__":
                "C":1,
                "mode":"numpy",
                "maxiter":1000,
-               "feedback":"saturate", #linear / saturate (BSB) / stp (DEN)
-               "gpu":False}
+               "feedback":"stp", #linear / saturate (BSB) / stp (DEN)
+               "gpu":False,
+               "sparse":False}
     ANet = AssociativeNet(hparams)
     
     strength = 0.5
@@ -87,6 +88,8 @@ if __name__ == "__main__":
     isort = np.argsort(ei)[::-1]
     ei = ei[isort]
     ev = ev[:, isort]
+    #ANet.W /= ei[0]
+    ANet.alpha = 1
 
 #    print(ei[0], sorted(zip(ev[:, 0][:ANet.V], ANet.vocab))[::-1], sorted(zip(ev[:, 0][ANet.V:], ANet.vocab))[::-1] )
 #    print(ei[1], sorted(zip(ev[:, 1][:ANet.V], ANet.vocab))[::-1], sorted(zip(ev[:, 1][ANet.V:], ANet.vocab))[::-1] )
@@ -114,7 +117,7 @@ if __name__ == "__main__":
     conds = "old_strong old_weak old_strong_part old_weak_part new1 new2 odd1 odd2".split()
     # conds = "new1 odd2".split()
     #conds = "old_strong_part old_weak_part new1 new2 odd1 odd2".split()[:2]
-    niter = 10
+    niter = 1000
     results_by_cond = {}
     #conds = "old_strong_part old_weak_part".split()
 
@@ -167,8 +170,8 @@ if __name__ == "__main__":
             if report not in reports:
                 reports[report] = 1
                 loads = []
-                for j in range(len(ANet.echo_frames)):
-                    echo = ANet.echo_frames[j]
+                for j in range(len(ANet.frames)):
+                    echo = ANet.frames[j]
                     loads.append([echo.dot(ev[:, 0]), echo.dot(ev[:, 1])])
                 loadings[report] = [loads]
                 #loadings[report] = [[echo.dot(ev[:, 0]), echo.dot(ev[:, 1])]]
@@ -176,8 +179,8 @@ if __name__ == "__main__":
             else:
                 reports[report] += 1
                 loads = []
-                for j in range(len(ANet.echo_frames)):
-                    echo = ANet.echo_frames[j]
+                for j in range(len(ANet.frames)):
+                    echo = ANet.frames[j]
                     loads.append([echo.dot(ev[:, 0]), echo.dot(ev[:, 1])])
                 loadings[report].append(loads)
     
