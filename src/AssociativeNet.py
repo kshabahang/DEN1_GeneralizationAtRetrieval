@@ -105,8 +105,8 @@ class AssociativeNet(Model):
             bank_k = []
             if self.hparams["localist"]:
                 for i in range(len(self.vocab)):
-                    bank_k.append(np.abs(self.echo_full[k*self.N + i]))
-                    #bank_k.append(self.echo_full[k*self.N + i])
+                    #bank_k.append(np.abs(self.echo_full[k*self.N + i]))
+                    bank_k.append(self.echo_full[k*self.N + i])
                     #sts = 1*self.echo_full[k*self.N + i]
                     #sts = sts.clip(min=0)
                     #bank_k.append(sts)
@@ -143,12 +143,18 @@ class AssociativeNet(Model):
                                    C_pq.data[i] = 1
                                else:
                                    C_pq.data[i] = 0
-                           C_pq.eliminate_zeros()
-                           C_pq = W_pq.tolil()
+
+
+                           C_pq = C_pq.tolil()
+
+                           #if p != q:
+                           #    for i in range(V):
+                           #        C_pq[i,i] = -1
+                           
                            for i in range(V):
                                for j in range(len(C_pq.rows[i])):
-                                   self.W[p*V + i, q*V + W_pq.rows[i][j]] = C_pq.data[i][j]#/len(W_pq.rows[i])
-                                   self.W[q*V + W_pq.rows[i][j], p*V + i] = C_pq.data[i][j]#/len(W_pq.rows[i])
+                                   self.W[p*V + i, q*V + C_pq.rows[i][j]] = C_pq.data[i][j]#/len(W_pq.rows[i])
+                                   self.W[q*V + C_pq.rows[i][j], p*V + i] = C_pq.data[i][j]#/len(W_pq.rows[i])
                        else:
                            alpha = 1 #add-1 Laplacian
                            logk = np.log2(7)
@@ -174,9 +180,9 @@ class AssociativeNet(Model):
                            weights = np.log2(np.diag(1.0/Pi).dot(P_pq.dot(np.diag(1.0/Pj)))) - logk#/-np.log2(P_pq)
                            weights.clip(min=0, out=weights)
 
-                           if p != q:
-                               for i in range(V):
-                                   weights -= np.eye(V)
+                           #if p != q:
+                           #    for i in range(V):
+                           #        weights -= 100*np.eye(V)
 
                            weights=  csr_matrix(weights)
 
@@ -222,11 +228,10 @@ class AssociativeNet(Model):
                        Pj = (np.array(C_pq.sum(axis=0))[0] + alpha*V)/(T + alpha*(V**2))
                        P_pq = (C_pq.todense() + alpha)/(T + alpha*(V**2))
                        weights = np.log2(np.diag(1.0/Pi).dot(P_pq.dot(np.diag(1.0/Pj))))# - logk#/-np.log2(P_pq)
-                       if p != q:
-                           for i in range(V):
-                               if weights[i,i] > 0:
-                                weights[i,i] *= -1
-                       print("T = {}".format(T))
+                       #if p != q:
+                       #    for i in range(V): 
+                       #         weights[i,i] = -500
+                       #print("T = {}".format(T))
                        #weights.clip(min=0, out=weights)
                        #weights = C_pq.todense() - np.outer(np.array(C_pq.sum(axis=0))[0]/T, C_pq.sum(axis=1))
                        #mu_j = weights.mean(axis=1)
@@ -271,13 +276,15 @@ class AssociativeNet(Model):
                 self.WEIGHTS.append(weights_p)
 
 
-    def prune(self, min_wf = 3):
+    def prune(self, min_wf = 3, exclude=[]):
         '''go through the co-occurrence matrix and get rid of every entry with word-freq less than min_wf'''
         V0 = self.V
         K = self.K
         counts_mask = np.zeros(V0*K)
         #vocab_mask = self.COUNTS[:V0, :V0].diagonal() >= min_wf
         vocab_mask = np.array(self.COUNTS[:self.V, self.V:].sum(axis=0))[0] >= min_wf
+        for i in range(len(exclude)):
+            vocab_mask[self.I[exclude[i]]] = False
         for k in range(K):
             counts_mask[k*V0:(k+1)*V0] = vocab_mask
         counts_mask = counts_mask.astype(bool)
@@ -307,6 +314,7 @@ class AssociativeNet(Model):
             ev = ev[:, ::-1]
         self.ei = ei.real
         self.ev = ev.real
+        self.ev1 = csr_matrix(self.ev[:, 0])
         e_max = sorted(self.ei)[::-1][0]
         self.alpha = 1.001#e_max + 0.1*e_max
         self.W.data /= e_max #+ 0.1*e_max
@@ -321,22 +329,6 @@ class AssociativeNet(Model):
             ev2 = ev[self.N:]
             e1_sign = ""
             e2_sign = ""
-            #abs_min = np.abs(ev1.min())
-            #abs_max = np.abs(ev1.max())
-            #if abs_min > abs_max:
-            #    ev1 = -ev1 
-            #    e1_sign = " - "
-            #else:
-            #    e1_sign = " + "
-
-            #abs_min = np.abs(ev2.min())
-            #abs_max = np.abs(ev2.max())
-            #if abs_min > abs_max:
-            #    ev2 = -ev2 
-            #    e2_sign = " - "
-            #else:
-            #    e2_sign = " + "
-
 
             bank1 = sorted(zip(ev1, self.vocab))[::-1][:10]
             bank2 = sorted(zip(ev2, self.vocab))[::-1][:10]
@@ -435,9 +427,14 @@ class AssociativeNet(Model):
 
             diff =  float(norm(x - x_new))
       
-         
+
 
         self.echo_full = 1*x_new
+
+        
+
+
+
         self.compute_sts() #compute strengths with updated buffer
         self.sort_banks()
         frames.append(deepcopy(self.strengths))
@@ -506,7 +503,7 @@ class AssociativeNet(Model):
 
         try: #this is here to ensure stp is taken back out in case of interruption..feel free to crt-c out
             x = 1*self.echo_full
-            x_new = x.dot(self.W)
+            x_new = x.dot(self.W) - x.dot(self.ev[:, 0])*self.ev[:, 0]
             vlen = float(norm(x_new))
             vlen1= float(norm(x_new[:self.V]))
             vlen2= float(norm(x_new[self.V:]))
@@ -517,7 +514,8 @@ class AssociativeNet(Model):
 
             while(diff > self.eps and count < self.maxiter):
                 count += 1
-                ###load buffer with new state
+                ###load buffer with new state 
+
                 x = 1*x_new
                 self.echo_full = 1*x_new #1*x_new
 
@@ -528,7 +526,7 @@ class AssociativeNet(Model):
 
 
                 ###compute the next state
-                x_new = x.dot(self.W) #took out implicit for now
+                x_new = x.dot(self.W) - x.dot(self.ev[:, 0])*self.ev[:, 0] 
 
                 vlen = float(norm(x_new))
                 vlen1= float(norm(x_new[:self.V]))
@@ -557,6 +555,7 @@ class AssociativeNet(Model):
 
 
         self.echo_full = 1*x_new
+
 
         print(self.echo_full.shape)
 
@@ -594,7 +593,7 @@ class AssociativeNet(Model):
 
         try: #this is here to ensure stp is taken back out in case of interruption..feel free to crt-c out
             x = csr_matrix(1*x0, dtype=float128)#1*self.echo_full
-            x_new = x.dot(self.W)
+            x_new = x.dot(self.W)  - x.dot(self.ev1.T)*self.ev1
             vlen = float(norm_sp(x_new))
             vlen1= float(norm_sp(x_new[0, :self.V]))
             vlen2= float(norm_sp(x_new[0,self.V:]))
@@ -616,7 +615,7 @@ class AssociativeNet(Model):
 
 
                 ###compute the next state
-                x_new = x.dot(self.W) #took out implicit for now
+                x_new = x.dot(self.W) - x.dot(self.ev1.T)*self.ev1
 
                 vlen = float(norm_sp(x_new))
                 vlen1= float(norm_sp(x_new[0, :self.V]))
@@ -645,6 +644,8 @@ class AssociativeNet(Model):
 
 
         self.echo_full = np.array(x_new.todense())[0]#1*x_new
+        #x_new = np.array(x_new.todense())[0]
+        #self.echo_full = x_new - x_new.dot(self.ev[:, 0])*self.ev[:, 0]
 
         self.compute_sts() #compute strengths with updated buffer
         self.sort_banks()

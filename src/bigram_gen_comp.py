@@ -102,12 +102,18 @@ if __name__ == "__main__":
     ANet.D = ANet.Ds[0]
 
     ANet.COUNTS = csr_matrix(C)
+
+
+
+
+
+
     del C
     #sys.exit()
     ##drop low freq terms
-    ANet.prune(min_wf = 50)
+    ANet.prune(min_wf = 5, exclude=["#","``"])
     print("Crunching out the weights...")
-    ANet.compute_weights(binaryMat=False)
+    ANet.compute_weights(binaryMat=True)
     ANet.update_eig()
     #e_max = 75.4832 #change this if you change the learning rule
     #ANet.alpha = 1.001
