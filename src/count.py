@@ -53,7 +53,9 @@ if __name__ == "__main__":
                 "init_weights":False,
                 "distributed":False,
                 "explicit":False,
-                "sparse":False}
+                "sparse":False,
+                "row_center":False,
+                "col_center":False}
     ANet = AssociativeNet(hparams)
 
     MODE = sys.argv[1]
@@ -128,6 +130,13 @@ if __name__ == "__main__":
 
         Ds = [lil_matrix((K*V, K*V), dtype=np.int64) for m in range(len(MAXDs))]
 
+        print("Constructing data matrix")
+        pbar = ProgressBar(maxval = len(corpus_int) - 1).start()
+        A = lil_matrix((len(corpus_int) - 1, K*V), dtype=np.int32) #data matrix
+        for i in range(len(corpus_int) - 1):
+            A[i, corpus_int[i]] = A[i, V + corpus_int[i+1]] = 1
+            pbar.update(i+1)
+
         pbar = ProgressBar(maxval=K**2).start()
         for k in range(K):
             for l in range(k,K):
@@ -163,13 +172,17 @@ if __name__ == "__main__":
 
         #np.savez("C", C)
         save_csr(csr_matrix(C), "C_{}_{}".format(IDX, CHU))
+        save_csr(csr_matrix(A), "A")
         for i in range(len(MAXDs)):
             save_csr(csr_matrix(Ds[i]), "D{}_{}_{}".format(MAXDs[i],IDX, CHU))
             os.system("mv D{}_* {}/{}/".format(MAXDs[i], root_mem_path, memory_path))
 
         os.system("mv C_* {}/{}/".format(root_mem_path, memory_path))
 
-
+        f = open("A_log.txt", "w")
+        f.write("{} {}".format(A.shape[0], A.shape[1]))
+        f.close()
+        os.system("mv A* {}/{}/".format(root_mem_path, memory_path))
 
 
 

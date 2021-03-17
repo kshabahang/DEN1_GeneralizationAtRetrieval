@@ -38,7 +38,7 @@ if __name__ == "__main__":
     
     hparams = {"bank_labels":["t-{}".format(i) for i in range(K)],
                "eps":1e-10, 
-               "eta":1,
+               "eta":0,
                "alpha":1,
                "beta":1,
                "V0":N,
@@ -55,7 +55,10 @@ if __name__ == "__main__":
                "distributed":False,
                "maxiter":1000,
                "explicit":True,
-               "sparse":True}
+               "sparse":False,
+               "row_center":False,
+               "col_center":False,
+               "norm":"pmi"}
     ANet = AssociativeNet(hparams)
 
     memory_path ="TASA" #sys.argv[1]
@@ -86,6 +89,17 @@ if __name__ == "__main__":
         C[:, :] += load_csr(root_mem_path + "/{}/C_{}_{}".format(memory_path, IDX, totalChunks), (V*K, V*K), dtype=np.int64)
 
 
+    f = open(root_mem_path + "/{}/A_log.txt".format(memory_path), "r")
+    A_dims = f.read().split()
+    f.close()
+    A_shape = (int(A_dims[0]), int(A_dims[1]))
+
+
+    sys.exit()
+    A = load_csr(root_mem_path + "/{}/A".format(memory_path),  A_shape, dtype=np.int32) #pre-computed
+
+
+
     #maxds =[5,10,15,20,50,100,200,300,500,1000]
     maxds = [50]#[5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100]
     Ds = []
@@ -111,9 +125,9 @@ if __name__ == "__main__":
     del C
     #sys.exit()
     ##drop low freq terms
-    ANet.prune(min_wf = 5, exclude=["#","``"])
+    ANet.prune(min_wf = 100, exclude=["#","``"])
     print("Crunching out the weights...")
-    ANet.compute_weights(binaryMat=True)
+    ANet.compute_weights(binaryMat=False)
     ANet.update_eig()
     #e_max = 75.4832 #change this if you change the learning rule
     #ANet.alpha = 1.001
@@ -202,9 +216,9 @@ if __name__ == "__main__":
                     #change = round(np.linalg.norm(ANet.frames[0] - ANet.frames[-1]), 3)
                     cycles = ANet.count
                     if i == 0:
-                        corr_lens.append(ANet.vlens[-1])
+                        corr_lens.append(ANet.vlens[-1][0])
                     else:
-                        incorr_lens.append(ANet.vlens[-1])
+                        incorr_lens.append(ANet.vlens[-1][0])
         
                     if "vlens" not in scores[labels[i]]:
                         scores[labels[i]]["vlens"] = [ANet.vlens[-1]]
