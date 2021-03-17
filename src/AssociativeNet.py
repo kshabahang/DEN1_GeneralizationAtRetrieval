@@ -27,6 +27,7 @@ class AssociativeNet(Model):
         self.vocab = [] #vocabulary
         self.eta = hparams["eta"]
         self.maxiter = hparams['maxiter']
+        self.norm = hparams['norm']
 
 
         self.vlens = [] #used to store vector lengths during recurrence
@@ -213,45 +214,63 @@ class AssociativeNet(Model):
                 #self.update_eig()
                 self.W.eliminate_zeros() 
             else: #dense
-                self.W = np.zeros(self.COUNTS.shape)
-                alpha = 0.01 #add-1 Laplacian
-                #logk = np.log2(7)
-                for p in range(K): 
-                   for q in range(p, K): #we can exploit the symmetry here
-                       print(p, q)
-                       C_pq = self.COUNTS[p*V:(p+1)*V, q*V:(q+1)*V]
+                if self.norm in ["pmi"]:
+                    self.W = np.zeros(self.COUNTS.shape)
+                    alpha = 0.01 #add-1 Laplacian
+                    #logk = np.log2(7)
+                    for p in range(K): 
+                       for q in range(p, K): #we can exploit the symmetry here
+                           print(p, q)
+                           C_pq = self.COUNTS[p*V:(p+1)*V, q*V:(q+1)*V]
 
-                       #nnzsi = C_pq.getnnz(axis=1)
-                       #nnzsj = C_pq.getnnz(axis=0)
-                       T = C_pq.sum()
-                       Pi = (np.array(C_pq.sum(axis=1).T)[0] + alpha*V)/(T + alpha*(V**2))
-                       Pj = (np.array(C_pq.sum(axis=0))[0] + alpha*V)/(T + alpha*(V**2))
-                       P_pq = (C_pq.todense() + alpha)/(T + alpha*(V**2))
-                       weights = np.log2(np.diag(1.0/Pi).dot(P_pq.dot(np.diag(1.0/Pj))))# - logk#/-np.log2(P_pq)
-                       #if p != q:
-                       #    for i in range(V): 
-                       #         weights[i,i] = -500
-                       #print("T = {}".format(T))
-                       #weights.clip(min=0, out=weights)
-                       #weights = C_pq.todense() - np.outer(np.array(C_pq.sum(axis=0))[0]/T, C_pq.sum(axis=1))
-                       #mu_j = weights.mean(axis=1)
-                       #sig_j= weights.std(axis=1)
-                       #weights = (weights - mu_j)/sig_j
-                       #for i in range(V):
-                       #    weights[i][i] = 0
-                       #mu_i = weights.mean(axis=1)
-                       #sig_i = weights.std(axis=1)
-                       #weights = ((weights.T - mu_i)/sig_i).T
+                           #nnzsi = C_pq.getnnz(axis=1)
+                           #nnzsj = C_pq.getnnz(axis=0)
+                           if self.norm == "pmi":
+                            T = C_pq.sum()
+                            Pi = (np.array(C_pq.sum(axis=1).T)[0] + alpha*V)/(T + alpha*(V**2))
+                            Pj = (np.array(C_pq.sum(axis=0))[0] + alpha*V)/(T + alpha*(V**2))
+                            P_pq = (C_pq.todense() + alpha)/(T + alpha*(V**2))
+                            weights = np.log2(np.diag(1.0/Pi).dot(P_pq.dot(np.diag(1.0/Pj))))# - logk#/-np.log2(P_pq)
+                           #if p != q:
+                           #    for i in range(V): 
+                           #         weights[i,i] = -500
+                           #print("T = {}".format(T))
+                           #weights.clip(min=0, out=weights)
+                           #weights = C_pq.todense() - np.outer(np.array(C_pq.sum(axis=0))[0]/T, C_pq.sum(axis=1))
+                           #mu_j = weights.mean(axis=1)
+                           #sig_j= weights.std(axis=1)
+                           #weights = (weights - mu_j)/sig_j
+                           #for i in range(V):
+                           #    weights[i][i] = 0
+                           #mu_i = weights.mean(axis=1)
+                           #sig_i = weights.std(axis=1)
+                           #weights = ((weights.T - mu_i)/sig_i).T
 
-                       #weights = np.diag(1.0/np.log2(nnzsi + 1e-7)).dot(weights.dot(np.diag(1.0/np.log2(nnzsj + 1e-7))))
-                       #for i in range(V):
-                       #    weights[i][i] = 0
-                       self.W[p*V:(p+1)*V, q*V:(q+1)*V] = weights
-                       self.W[q*V:(q+1)*V, p*V:(p+1)*V] = weights.T #global symmetry
-                del weights
-                #del P_pq
-                del C_pq
-                #self.update_eig()
+                           #weights = np.diag(1.0/np.log2(nnzsi + 1e-7)).dot(weights.dot(np.diag(1.0/np.log2(nnzsj + 1e-7))))
+                           #for i in range(V):
+                           #    weights[i][i] = 0
+                           self.W[p*V:(p+1)*V, q*V:(q+1)*V] = weights
+                           self.W[q*V:(q+1)*V, p*V:(p+1)*V] = weights.T #global symmetry
+                    del weights
+                    #del P_pq
+                    del C_pq
+                    #self.update_eig()
+                else: #correlation
+                    k = int(self.A.shape[0]/10) #whole lot
+                    perc = round(100*(k/self.A.shape[0]), 2)
+                    print("Computing correlation matrix over the first {} windows ({}% of total windows)".format(k, perc))
+                    #C = ((self.A[:k].T*self.A[:k] -(sum(self.A[:k]).T*sum(self.A[:k])/(k)))/(k-1)).todense()
+                    C = (1/(k-1))*self.A[:k].T*self.A[:k] - (1/(k*(k-1)))*(sum(self.A[:k]).T*sum(self.A[:k]))
+                    C = C.todense()
+                    V=np.sqrt(np.mat(np.diag(C)).T*np.mat(np.diag(C)))
+                    COR = np.divide(C,V+1e-119)
+                    self.W = np.array(COR)
+
+
+
+
+
+
                 
         else:
             '''No explicit matrix...matmul will be done implicitly'''
@@ -289,6 +308,11 @@ class AssociativeNet(Model):
             counts_mask[k*V0:(k+1)*V0] = vocab_mask
         counts_mask = counts_mask.astype(bool)
         self.COUNTS = self.COUNTS[counts_mask, :][:, counts_mask]
+        self.counts_mask = counts_mask
+        if self.A is not None:
+            self.A = self.A[:, counts_mask]
+            experience_mask = np.array(self.A.sum(axis=1)).squeeze() >= 2
+            self.A = self.A[experience_mask, :]
 
 
         vocab_new = np.array(self.vocab)[vocab_mask]

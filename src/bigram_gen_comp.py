@@ -58,7 +58,7 @@ if __name__ == "__main__":
                "sparse":False,
                "row_center":False,
                "col_center":False,
-               "norm":"pmi"}
+               "norm":"correlation"}
     ANet = AssociativeNet(hparams)
 
     memory_path ="TASA" #sys.argv[1]
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     A_shape = (int(A_dims[0]), int(A_dims[1]))
 
 
-    sys.exit()
+    
     A = load_csr(root_mem_path + "/{}/A".format(memory_path),  A_shape, dtype=np.int32) #pre-computed
 
 
@@ -114,6 +114,7 @@ if __name__ == "__main__":
 
     ANet.Ds = Ds
     ANet.D = ANet.Ds[0]
+    ANet.A = A
 
     ANet.COUNTS = csr_matrix(C)
 
@@ -126,6 +127,9 @@ if __name__ == "__main__":
     #sys.exit()
     ##drop low freq terms
     ANet.prune(min_wf = 100, exclude=["#","``"])
+
+
+
     print("Crunching out the weights...")
     ANet.compute_weights(binaryMat=False)
     ANet.update_eig()
