@@ -75,7 +75,7 @@ class AssociativeNet(Model):
         self.lesion_pair = pair
         K = self.K
         V = len(self.vocab)
-        D = len(self.Ds)
+        #D = len(self.Ds)
 
         a2b = deepcopy(self.W[self.I[w1],V + self.I[w2]])
         b2a = deepcopy(self.W[V + self.I[w2],self.I[w1]])
@@ -91,7 +91,7 @@ class AssociativeNet(Model):
         w1, w2 = self.lesion_pair
         K = self.K
         V = len(self.vocab)
-        D = len(self.Ds)
+        #D = len(self.Ds)
 
         a2b = self.a2b
         b2a = self.b2a
@@ -124,7 +124,7 @@ class AssociativeNet(Model):
         K = self.K 
         V = len(self.vocab)
         self.V = V
-        L = len(self.Ds)
+        #L = len(self.Ds)
         N = self.N
         if self.hparams['explicit'] and not self.hparams['init_weights']:
             '''In this case we also construct an explicit matrix'''
@@ -135,7 +135,7 @@ class AssociativeNet(Model):
                    for q in range(p, K):
                        C_pq = self.COUNTS[p*V:(p+1)*V, q*V:(q+1)*V]
                        #W_pq = self.Ds[0][p*V:(p+1)*V, q*V:(q+1)*V]
-                       D_pq = self.Ds[0][p*V:(p+1)*V, q*V:(q+1)*V].tolil()
+                       #D_pq = self.Ds[0][p*V:(p+1)*V, q*V:(q+1)*V].tolil()
                        print(C_pq.shape)
                        C_pq.eliminate_zeros()
                        if binaryMat:
@@ -224,13 +224,12 @@ class AssociativeNet(Model):
                            C_pq = self.COUNTS[p*V:(p+1)*V, q*V:(q+1)*V]
 
                            #nnzsi = C_pq.getnnz(axis=1)
-                           #nnzsj = C_pq.getnnz(axis=0)
-                           if self.norm == "pmi":
-                            T = C_pq.sum()
-                            Pi = (np.array(C_pq.sum(axis=1).T)[0] + alpha*V)/(T + alpha*(V**2))
-                            Pj = (np.array(C_pq.sum(axis=0))[0] + alpha*V)/(T + alpha*(V**2))
-                            P_pq = (C_pq.todense() + alpha)/(T + alpha*(V**2))
-                            weights = np.log2(np.diag(1.0/Pi).dot(P_pq.dot(np.diag(1.0/Pj))))# - logk#/-np.log2(P_pq)
+                           #nnzsj = C_pq.getnnz(axis=0) 
+                           T = C_pq.sum()
+                           Pi = (np.array(C_pq.sum(axis=1).T)[0] + alpha*V)/(T + alpha*(V**2))
+                           Pj = (np.array(C_pq.sum(axis=0))[0] + alpha*V)/(T + alpha*(V**2))
+                           P_pq = (C_pq.todense() + alpha)/(T + alpha*(V**2))
+                           weights = np.log2(np.diag(1.0/Pi).dot(P_pq.dot(np.diag(1.0/Pj))))# - logk#/-np.log2(P_pq)
                            #if p != q:
                            #    for i in range(V): 
                            #         weights[i,i] = -500
@@ -265,13 +264,6 @@ class AssociativeNet(Model):
                     V=np.sqrt(np.mat(np.diag(C)).T*np.mat(np.diag(C)))
                     COR = np.divide(C,V+1e-119)
                     self.W = np.array(COR)
-
-
-
-
-
-
-                
         else:
             '''No explicit matrix...matmul will be done implicitly'''
             self.WEIGHTS     = []
@@ -330,18 +322,28 @@ class AssociativeNet(Model):
 
 
     def update_eig(self):
+        k = 100
+        N = self.V*self.K
         if self.hparams["sparse"]:
-            ei, ev = eigs(self.W.astype(np.float64), k =50)
+            ei, ev = eigs(self.W.astype(np.float64), k =k)
+            self.ei = ei.real
+            self.ev = ev.real
+            self.ev1 = csr_matrix(self.ev[:, 0])
+            e_max = sorted(self.ei)[::-1][0]
+            self.alpha = 1.001#e_max + 0.1*e_max
+            self.W.data /= e_max #+ 0.1*e_max
         else:
-            ei, ev = eigh(self.W)
+            #ei, ev = eigh(self.W)
+            ei, ev = eigh(self.W, eigvals=(N-k,N-1))
             ei = ei[::-1]
             ev = ev[:, ::-1]
-        self.ei = ei.real
-        self.ev = ev.real
-        self.ev1 = csr_matrix(self.ev[:, 0])
-        e_max = sorted(self.ei)[::-1][0]
-        self.alpha = 1.001#e_max + 0.1*e_max
-        self.W.data /= e_max #+ 0.1*e_max
+            self.ei = ei.real
+            self.ev = ev.real
+            self.ev1 = self.ev[:, 0]
+            e_max = sorted(self.ei)[::-1][0]
+            self.alpha = 1.001#e_max + 0.1*e_max
+            self.W /= e_max
+
 
 
     def print_eigenspectrum(self):
@@ -527,7 +529,7 @@ class AssociativeNet(Model):
 
         try: #this is here to ensure stp is taken back out in case of interruption..feel free to crt-c out
             x = 1*self.echo_full
-            x_new = x.dot(self.W) - x.dot(self.ev[:, 0])*self.ev[:, 0]
+            x_new = x.dot(self.W) - self.eta*x.dot(self.ev[:, 0])*self.ev[:, 0]
             vlen = float(norm(x_new))
             vlen1= float(norm(x_new[:self.V]))
             vlen2= float(norm(x_new[self.V:]))
@@ -550,7 +552,7 @@ class AssociativeNet(Model):
 
 
                 ###compute the next state
-                x_new = x.dot(self.W) - x.dot(self.ev[:, 0])*self.ev[:, 0] 
+                x_new = x.dot(self.W) - self.eta*x.dot(self.ev[:, 0])*self.ev[:, 0] 
 
                 vlen = float(norm(x_new))
                 vlen1= float(norm(x_new[:self.V]))
@@ -617,7 +619,7 @@ class AssociativeNet(Model):
 
         try: #this is here to ensure stp is taken back out in case of interruption..feel free to crt-c out
             x = csr_matrix(1*x0, dtype=float128)#1*self.echo_full
-            x_new = x.dot(self.W)  - x.dot(self.ev1.T)*self.ev1
+            x_new = x.dot(self.W)  - self.eta*x.dot(self.ev1.T)*self.ev1
             vlen = float(norm_sp(x_new))
             vlen1= float(norm_sp(x_new[0, :self.V]))
             vlen2= float(norm_sp(x_new[0,self.V:]))
@@ -639,7 +641,7 @@ class AssociativeNet(Model):
 
 
                 ###compute the next state
-                x_new = x.dot(self.W) - x.dot(self.ev1.T)*self.ev1
+                x_new = x.dot(self.W) - self.eta*x.dot(self.ev1.T)*self.ev1
 
                 vlen = float(norm_sp(x_new))
                 vlen1= float(norm_sp(x_new[0, :self.V]))
