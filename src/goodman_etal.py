@@ -80,15 +80,16 @@ if __name__ == "__main__":
     K = 2
 
     
+
     hparams = {"bank_labels":["t-{}".format(i) for i in range(K)],
-               "eps":0.0000001, 
+               "eps":1e-10,
                "eta":1,
-               "alpha":1,
+               "alpha":1.001,
                "beta":1,
                "V0":N,
                "N":N,
                "idx_predict":1,
-               "numBanks":K, 
+               "numBanks":K,
                "numSlots":K,
                "C":1,
                "mode":"numpy",
@@ -97,10 +98,17 @@ if __name__ == "__main__":
                "gpu":False,
                "localist":True,
                "distributed":False,
-               "explicit":True}
+               "maxiter":1000,
+               "explicit":True,
+               "sparse":False,
+               "row_center":False,
+               "col_center":False,
+               "norm":"pmi"}
+
+
     ANet = AssociativeNet(hparams)
 
-    memory_path = sys.argv[1]
+    memory_path = "TASA"#sys.argv[1]
 
 #    sweep_idx_i = int(sys.argv[2])
 #    sweep_idx_j = int(sys.argv[3])
@@ -116,6 +124,7 @@ if __name__ == "__main__":
     ANet.vocab = [vocab[i].strip() for i in range(len(vocab))]
     f.close()
     ANet.I = {ANet.vocab[i]:i for i in range(len(vocab))}
+    ANet.V = len(vocab)
 
     f = open("log.out", "w")
     f.write("Let's go..." +"\n")
@@ -135,11 +144,30 @@ if __name__ == "__main__":
 
 #    C -= np.diag(np.array(C.diagonal()).flatten())
 
+    ###take out any counts less than a criterion
+    #min_cc = 2
+    #for i in range(len(C.data)):
+    #    if C.data[i] < min_cc:
+    #        C.data[i] = 0
+    #C.eliminate_zeros()
+
+    ANet.A= None
+
+
+
     ANet.COUNTS = csr_matrix(C)
     del C
     print("Crunching out the weights...")
-    ANet.compute_weights()
-    ANet.nullvec = np.zeros((K*N))
+    #ANet.compute_weights()
+
+    ANet.prune(min_wf = 15)
+    ANet.W = np.load(root_mem_path + "/{}/pmi.npy".format(memory_path))
+    ANet.ei = np.load(root_mem_path + "/{}/ei_pmi.npy".format(memory_path))
+    ANet.ev = np.load(root_mem_path + "/{}/ev_pmi.npy".format(memory_path))
+    ANet.W /= max(ANet.ei)
+
+    ANet.nullvec = np.zeros((K*ANet.V))
+    ANet.N = ANet.V
 
     if ANet.hparams["gpu"]:
         ANet.nullvec = ANet.nullvec.cuda()
@@ -164,7 +192,7 @@ if __name__ == "__main__":
 
     lists = [L1, L2]
 
-    N = 1000
+    N = 35
 
     grammatical = []
     ungrammatical = []

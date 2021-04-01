@@ -61,7 +61,7 @@ if __name__ == "__main__":
                "norm":"pmi"}
     ANet = AssociativeNet(hparams)
 
-    memory_path ="TASA" #sys.argv[1]
+    memory_path ="FRENCH" #sys.argv[1]
 
     NSamples = 100
 
@@ -101,19 +101,19 @@ if __name__ == "__main__":
 
 
     #maxds =[5,10,15,20,50,100,200,300,500,1000]
-    maxds = [50]#[5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100]
-    Ds = []
-    for i in range(len(maxds)):
-        MAXD = maxds[i]
-        D = load_csr(root_mem_path + "/{}/D{}_{}_{}".format(memory_path, MAXD,0, totalChunks),  (V*K, V*K), dtype=np.int64) #pre-computed
-        for IDX in range(1, nchunk):
-            D[:, :] += load_csr(root_mem_path + "/{}/D{}_{}_{}".format(memory_path,MAXD, IDX, totalChunks), (V*K, V*K), dtype=np.int64)
-        
-        Ds.append( csr_matrix(D) )
+    #maxds = [50]#[5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100]
+    #Ds = []
+    #for i in range(len(maxds)):
+    #    MAXD = maxds[i]
+    #    D = load_csr(root_mem_path + "/{}/D{}_{}_{}".format(memory_path, MAXD,0, totalChunks),  (V*K, V*K), dtype=np.int64) #pre-computed
+    #    for IDX in range(1, nchunk):
+    #        D[:, :] += load_csr(root_mem_path + "/{}/D{}_{}_{}".format(memory_path,MAXD, IDX, totalChunks), (V*K, V*K), dtype=np.int64)
+    #    
+    #    Ds.append( csr_matrix(D) )
 
 
-    ANet.Ds = Ds
-    ANet.D = ANet.Ds[0]
+    #ANet.Ds = Ds
+    #ANet.D = ANet.Ds[0]
     ANet.A = A
 
 
@@ -134,7 +134,7 @@ if __name__ == "__main__":
     ##drop low freq term
     ANet.prune(min_wf = 15) #10
 
-    toLoad = True
+    toLoad = False
     if toLoad:
         print("Loading weight matrix")
         ANet.W = np.load(root_mem_path + "/{}/pmi.npy".format(memory_path))
