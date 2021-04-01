@@ -132,7 +132,7 @@ if __name__ == "__main__":
     del C
     #sys.exit()
     ##drop low freq term
-    ANet.prune(min_wf = 15) #10
+    ANet.prune(min_wf = 70) #10
 
     toLoad = False
     if toLoad:

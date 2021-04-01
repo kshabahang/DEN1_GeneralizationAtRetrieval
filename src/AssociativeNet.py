@@ -4,7 +4,8 @@ from itertools import combinations, product
 #import cv2
 import numpy as np
 from scipy.linalg import hadamard, norm
-from numpy.linalg import eig, eigh
+#from numpy.linalg import eig, eigh
+from scipy.linalg import eigh
 from scipy.sparse.linalg import eigs, eigen
 from scipy.sparse import lil_matrix, csr_matrix
 from scipy import float128
@@ -216,7 +217,7 @@ class AssociativeNet(Model):
             else: #dense
                 if self.norm in ["pmi"]:
                     self.W = np.zeros(self.COUNTS.shape)
-                    alpha = 0.01 #add-1 Laplacian
+                    alpha = 5 #add-1 Laplacian
                     #logk = np.log2(7)
                     for p in range(K): 
                        for q in range(p, K): #we can exploit the symmetry here
@@ -250,9 +251,10 @@ class AssociativeNet(Model):
                            #    weights[i][i] = 0
                            self.W[p*V:(p+1)*V, q*V:(q+1)*V] = weights
                            self.W[q*V:(q+1)*V, p*V:(p+1)*V] = weights.T #global symmetry
-                    del weights
-                    #del P_pq
-                    del C_pq
+                           del weights
+                           del C_pq
+                           del Pi
+                           del Pj
                     #self.update_eig()
                 else: #correlation
                     k = int(self.A.shape[0]/10) #whole lot
