@@ -1,6 +1,7 @@
 import spacy
 import pickle
 import numpy as np
+from progressbar import ProgressBar
 
 
 root_mem = "/home/ubuntu/LTM/DEN1_GeneralizationAtRetrieval/rsc/FRENCH/"
@@ -15,100 +16,82 @@ f = open(root_mem + "bgs_by_tag.pkl", "rb")
 bgsByTag = pickle.load(f)
 f.close()
 
-K = 1000 #top bgs to examine
+K = 10000 #top bgs to examine
+
+f = open("french_nouns.txt", "r")
+nouns=  f.readlines()
+f.close()
+nouns = list(filter(lambda s : 'mas' in s, nouns)) #only masculine
+noun_sing, noun_plur = zip(*[(nouns[i], nouns[i+1]) for i in range(0, int(len(nouns)/2), 2)])
+noun_sing = [noun_sing[i].strip().lower().split(';')[0] for i in range(len(noun_sing))]
+noun_plur = [noun_plur[i].strip().lower().split(';')[0] for i in range(len(noun_plur))]
+noun_sing2plur = dict(zip(noun_sing, noun_plur))
+
+f = open("french_adjectives.txt", "r")
+adjectives=  f.readlines()
+f.close()
+adjectives = list(filter(lambda s : ('sg' in s or 'pl' in s) and ('epi' not in s), adjectives))
+adj_sing, adj_plur = zip(*[tuple(adjectives[i:i+2]) for i in range(0, int(len(adjectives)/2), 2)])
+adj_sing = [adj_sing[i].strip().lower().split(';')[0] for i in range(len(adj_sing))]
+adj_plur = [adj_plur[i].strip().lower().split(';')[0] for i in range(len(adj_plur))]
+adj_sing2plur = dict(zip(adj_sing, adj_plur))
+
+f = open("french_pronouns.txt", "r")
+pronouns=  f.readlines()
+f.close()
+
+f = open("french_determiners.txt", "r")
+determiners =  f.readlines()
+f.close()
 
 
-###first we sample adjective-noun bgs 
-frq, bg = zip(*bgsByTag[('ADJ', 'NOM')])
-adj, nom = zip(*bg)
-
-NOMS_adj = []
+NOM_adj = []
 ADJ_adj = []
-for i in range(K):
-    w = nlp(nom[i])[0]
-    tag = w.tag_
-    if '=' in tag:
-        tag = tag.split('|')
+ADJ_adj_plur = []
+for i in range(5000):
+    (fr, (adj, nom)) = bgsByTag[('ADJ', 'NOM')][i]
+    if nom[0] not in 'auouwyq':
+        w_nom = nlp(nom)[0]
+        toSkip = False
+        if 'Masc' in w_nom.tag_:
+            if 'Sing' in w_nom.tag_:
+                adj_txt = adj
+                if adj_txt not in adj_sing2plur:
+                    toSkip = True
+                else:
+                    adj_txt_plur = adj_sing2plur[adj_txt]
+                nom_txt = nom
+            else:
+                #singularize
+                adj_txt_plur = adj
+                adj_txt = nlp(adj)[0].lemma_
+                nom_txt = w_nom.lemma_
+            try:
+                if adj_txt == adj_txt_plur:
+                    toSkip = True
+            except:
+                toSkip = True
+            if not toSkip:
 
-        tag = {tag[j].split('=')[0]:tag[j].split('=')[1] for j in range(len(tag))}
-        if 'NOUN__Gender' in tag and 'Number' in tag:
-            if tag['NOUN__Gender'] == 'Masc' and tag['Number'] == 'Sing':
-                #print(tag, det[i], w)
-                ADJ_adj.append(adj[i])
-                NOMS_adj.append(w.text)
-
-###then we sample determiner-noun bgs
-frq, bg = zip(*bgsByTag[('DET:ART', 'NOM')])
-det, nom = zip(*bg)
-
-NOMS_det = []
-DET_det = []
-for i in range(K):
-    w = nlp(nom[i])[0]
-    tag = w.tag_
-    if '=' in tag:
-        tag = tag.split('|')
-
-        tag = {tag[j].split('=')[0]:tag[j].split('=')[1] for j in range(len(tag))}
-        if 'NOUN__Gender' in tag and 'Number' in tag:
-            if tag['NOUN__Gender'] == 'Masc' and tag['Number'] == 'Sing' and w.text in NOMS_adj:
-                #print(tag, det[i], w)
-                DET_det.append(det[i])
-                NOMS_det.append(w.text)
-
-####we also sample possesive-noun bgs
-frq, bg = zip(*bgsByTag[('DET:POS', 'NOM')])
-pos, nom = zip(*bg)
-
-NOMS_pos = []
-POS_pos = []
-for i in range(K):
-    w = nlp(nom[i])[0]
-    tag = w.tag_
-    if '=' in tag:
-        tag = tag.split('|')
-
-        tag = {tag[j].split('=')[0]:tag[j].split('=')[1] for j in range(len(tag))}
-        if 'NOUN__Gender' in tag and 'Number' in tag:
-            if tag['NOUN__Gender'] == 'Masc' and tag['Number'] == 'Sing' and w.text in NOMS_adj:
-                #print(tag, det[i], w)
-                POS_pos.append(pos[i])
-                NOMS_pos.append(w.text)
+                print("/".join(["le", "les"]), "/".join([adj_txt, adj_txt_plur]), nom_txt)
+            
 
 
 
-####we also sample possesive-noun bgs
-frq, bg = zip(*bgsByTag[('PRO:DEM', 'NOM')])
-dem, nom = zip(*bg)
-
-NOMS_dem = []
-DEM_dem = []
-for i in range(K):
-    w = nlp(nom[i])[0]
-    tag = w.tag_
-    if '=' in tag:
-        tag = tag.split('|')
-
-        tag = {tag[j].split('=')[0]:tag[j].split('=')[1] for j in range(len(tag))}
-        if 'NOUN__Gender' in tag and 'Number' in tag:
-            if tag['NOUN__Gender'] == 'Masc' and tag['Number'] == 'Sing' and w.text in NOMS_adj:
-                #print(tag, det[i], w)
-                DEM_dem.append(dem[i])
-                NOMS_dem.append(w.text)
 
 
-###now we need to match determiner/posessive/demonstratives with adjectives, based on noun
-choice = np.zeros(3)
-for i in range(len(NOMS_adj)):
-    choice[0] = int( NOMS_adj[i] in NOMS_pos )
-    choice[1] = int( NOMS_adj[i] in NOMS_dem )
-    choice[2] = int( NOMS_adj[i] in NOMS_det )
-    if sum(choice) == 1:
-        idx = np.argmax(choice)
-    elif sum(choice) == 2:
-        idx_neg = np.argmin(choice)
 
-    print(inPOS, inDEM, inDET)
 
+
+
+
+
+
+
+
+
+
+
+        
 
 

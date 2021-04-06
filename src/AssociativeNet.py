@@ -4,8 +4,8 @@ from itertools import combinations, product
 #import cv2
 import numpy as np
 from scipy.linalg import hadamard, norm
-#from numpy.linalg import eig, eigh
-from scipy.linalg import eigh
+from numpy.linalg import eig, eigh
+#from scipy.linalg import eigh
 from scipy.sparse.linalg import eigs, eigen
 from scipy.sparse import lil_matrix, csr_matrix
 from scipy import float128
@@ -335,8 +335,8 @@ class AssociativeNet(Model):
             self.alpha = 1.001#e_max + 0.1*e_max
             self.W.data /= e_max #+ 0.1*e_max
         else:
-            #ei, ev = eigh(self.W)
-            ei, ev = eigh(self.W, eigvals=(N-k,N-1))
+            ei, ev = eigh(self.W)
+            #ei, ev = eigh(self.W, eigvals=(N-k,N-1))
             ei = ei[::-1]
             ev = ev[:, ::-1]
             self.ei = ei.real

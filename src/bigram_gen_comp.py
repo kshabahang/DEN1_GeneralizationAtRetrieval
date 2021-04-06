@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
     
     hparams = {"bank_labels":["t-{}".format(i) for i in range(K)],
-               "eps":1e-10, 
+               "eps":1e-7, 
                "eta":1,
                "alpha":1.001,
                "beta":1,
@@ -134,7 +134,7 @@ if __name__ == "__main__":
     ##drop low freq term
     ANet.prune(min_wf = 50) #10
 
-    toLoad = True
+    toLoad =True
     if toLoad:
         print("Loading weight matrix")
         ANet.W = np.load(root_mem_path + "/{}/pmi.npy".format(memory_path))

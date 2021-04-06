@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
     
     hparams = {"bank_labels":["t-{}".format(i) for i in range(K)],
-               "eps":1e-10, 
+               "eps":1e-7, 
                "eta":1,
                "alpha":1.001,
                "beta":1,
@@ -63,7 +63,7 @@ if __name__ == "__main__":
 
     memory_path ="FRENCH" #sys.argv[1]
 
-    NSamples = 100
+    NSamples = 150
 
     root_mem_path = "/home/ubuntu/LTM/DEN1_GeneralizationAtRetrieval/rsc"
 
@@ -99,7 +99,6 @@ if __name__ == "__main__":
     A = load_csr(root_mem_path + "/{}/A".format(memory_path),  A_shape, dtype=np.int32) #pre-computed
 
 
-
     #maxds =[5,10,15,20,50,100,200,300,500,1000]
     #maxds = [50]#[5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100]
     #Ds = []
@@ -132,9 +131,38 @@ if __name__ == "__main__":
     del C
     #sys.exit()
     ##drop low freq term
-    ANet.prune(min_wf = 70) #10
+    ANet.prune(min_wf = 60) #10
 
-    toLoad = False
+    f = open("cole1.txt", "r")
+    bg_pool = f.readlines()
+    f.close()
+    close_class = []
+    open_class = []
+
+    for i in range(len(bg_pool)):
+        [dts, adjs, n] = bg_pool[i].split()
+        [adj_sg, adj_pl] = adjs.split('/')
+        [dt_sg, dt_pl] = dts.split('/')
+        closed_control = dt_sg + " " + n 
+        closed_number = dt_pl + " " + n
+        open_control = adj_sg + " " + n
+        open_number  = adj_pl + " " + n
+        check = [adj_sg, adj_pl, dt_sg, dt_pl, n]
+        isSafe = True
+        for j in range(len(check)):
+            if check[j] not in ANet.vocab:
+                isSafe = False
+        if isSafe:
+            #print(closed_control, closed_number)
+            #print(open_control, open_number)
+            close_class.append([closed_control, closed_number])
+            open_class.append([open_control, open_number])
+
+
+
+
+
+    toLoad = True
     if toLoad:
         print("Loading weight matrix")
         ANet.W = np.load(root_mem_path + "/{}/pmi.npy".format(memory_path))
@@ -177,42 +205,26 @@ if __name__ == "__main__":
     
     toLesion = True
 
-    pairs = "VB_RBR_2_RBR_VB PPRS_NN_2_PPR_NN IN_VBG_2_IN_VBP NNS_VBP_2_NN_VBP NN_VBZ_2_NN_VBP DT_NN_2_NN_DT JJ_NN_2_NN_JJ NN_IN_2_IN_NN PPR_VBP_2_PPRS_VBP".split()#[1:]
-
     runSet = sys.argv[2] == "bgs"
 
     if runSet: 
 
-        grammatical = "VB_RBR PPRS_NN IN_VBG NNS_VBP NN_VBZ DT_NN JJ_NN NN_IN PPR_VBP".split()
-        ungrammatical="RBR_VB PPR_NN IN_VBP NN_VBP NN_VBP NN_DT NN_JJ IN_NN PPRS_VBP".split()
-
-
-
-        pair_set = pairs[comp_idx]
-
-        print (pair_set)
-         
-
-        #f = open("../rsc/bigrams/" +grammatical[i] + ".txt", "r")
-        #probes_g = f.readlines()
-        #f.close()
-
-        #f = open("../rsc/bigrams/" +ungrammatical[i] + ".txt", "r")
-        #probes_ug = f.readlines()
-        #f.close()
-
-        f = open("../rsc/to_run_NOVELS"+ pair_set + ".txt", "r")
-        bgs = f.readlines()
-        f.close()
-
+        if comp_idx == 0:
+            bgs = open_class
+            pair_set = "ADJNOM_2_ADJSNOM"
+        if comp_idx == 1:
+            pair_set = "DETNOM_2_DETSNOM"
+            bgs = close_class
+        
         probes_g  = [] 
         probes_ug = []
         for l in range(len(bgs)):
-             [corrA, corrB, incorrA, incorrB] = bgs[l].split()
-             probes_g.append(corrA + " " + corrB)
-             probes_ug.append(incorrA + " " + incorrB)
+            [corr, incorr] = bgs[l]
+            [corrA, corrB] = corr.split()
+            [incorrA, incorrB] = incorr.split()
 
-
+            probes_g.append(corrA + " " + corrB)
+            probes_ug.append(incorrA + " " + incorrB)
 
 
         scores = {"correct":{}, "incorrect":{}}
@@ -221,7 +233,7 @@ if __name__ == "__main__":
 
 
 
-        for k in range(len(bgs)):
+        for k in range(NSamples):
             #(frq, [correct, incorrect]) = pair_items[k]
             frq = 0
             correct = probes_g[k]

@@ -82,7 +82,7 @@ if __name__ == "__main__":
     
 
     hparams = {"bank_labels":["t-{}".format(i) for i in range(K)],
-               "eps":1e-10,
+               "eps":1e-7,
                "eta":1,
                "alpha":1.001,
                "beta":1,
@@ -160,7 +160,7 @@ if __name__ == "__main__":
     print("Crunching out the weights...")
     #ANet.compute_weights()
 
-    ANet.prune(min_wf = 15)
+    ANet.prune(min_wf = 50)
     ANet.W = np.load(root_mem_path + "/{}/pmi.npy".format(memory_path))
     ANet.ei = np.load(root_mem_path + "/{}/ei_pmi.npy".format(memory_path))
     ANet.ev = np.load(root_mem_path + "/{}/ev_pmi.npy".format(memory_path))
