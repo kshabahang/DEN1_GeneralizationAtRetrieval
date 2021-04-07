@@ -132,9 +132,9 @@ if __name__ == "__main__":
     del C
     #sys.exit()
     ##drop low freq term
-    ANet.prune(min_wf = 50) #10
+    ANet.prune(min_wf = 50) #50 works
 
-    toLoad =True
+    toLoad = True
     if toLoad:
         print("Loading weight matrix")
         ANet.W = np.load(root_mem_path + "/{}/pmi.npy".format(memory_path))
@@ -219,6 +219,9 @@ if __name__ == "__main__":
         corr_lens = []
         incorr_lens=[]
 
+        corr_lens1 = [] ##save the first length
+        incorr_lens1 = []
+
 
 
         for k in range(len(bgs)):
@@ -254,16 +257,20 @@ if __name__ == "__main__":
                     cycles = ANet.count
                     if i == 0:
                         corr_lens.append(ANet.vlens[-1][0])
+                        corr_lens1.append(ANet.vlens[1][0])
                     else:
                         incorr_lens.append(ANet.vlens[-1][0])
+                        incorr_lens1.append(ANet.vlens[1][0])
         
                     if "vlens" not in scores[labels[i]]:
                         scores[labels[i]]["vlens"] = [ANet.vlens[-1]]
+                        scores[labels[i]]["vlens1"] = [ANet.vlens[1]]
                         #scores[labels[i]]["ncycles"] = [len(ANet.frames)]
                         scores[labels[i]]["probe"] = [probe]
                         scores[labels[i]]["freq"] = [frq]
                     else:
                         scores[labels[i]]["vlens"].append(ANet.vlens[-1])
+                        scores[labels[i]]["vlens1"].append(ANet.vlens[1])
                         #scores[labels[i]]["ncycles"].append(len(ANet.frames))
                         scores[labels[i]]["probe"].append(probe)                
                         scores[labels[i]]["freq"].append(frq)
