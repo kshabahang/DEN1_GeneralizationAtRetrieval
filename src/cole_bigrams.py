@@ -130,11 +130,11 @@ frq, bgs = zip(*bgsByTag[('DET:ART', 'NOM')])
 det, nom = zip(*bgs)
 nom2det = {}
 for i in range(len(nom)):
-    if nom[i] in nom2dets:
-        if det[i] not in nom2dets[nom[i]]:
-            nom2dets[nom[i]].append(det[i])
+    if nom[i] in nom2det:
+        if det[i] not in nom2det[nom[i]]:
+            nom2det[nom[i]].append(det[i])
     else:
-        nom2dets[nom[i]] = [det[i]]
+        nom2det[nom[i]] = [det[i]]
 
 frq, bgs = zip(*bgsByTag[('DET:POS', 'NOM')])
 pos, nom = zip(*bgs)
@@ -183,7 +183,9 @@ for i in range(len(NOM_adj)):
                         "close":{"control": det, "number":det_sing2plu[det],"gender":det_mas2fem[det]}}
     pbar.update(i+1)
         
-
+f = open("cole_stims.pkl", "wb")
+pickle.dump(nom2ctx, f)
+f.close()
 
 
 
