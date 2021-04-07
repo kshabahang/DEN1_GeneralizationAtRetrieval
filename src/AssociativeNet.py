@@ -308,6 +308,7 @@ class AssociativeNet(Model):
             experience_mask = np.array(self.A.sum(axis=1)).squeeze() >= 2
             self.A = self.A[experience_mask, :]
 
+        self.vocab_mask = vocab_mask
 
         vocab_new = np.array(self.vocab)[vocab_mask]
         V = len(vocab_new)

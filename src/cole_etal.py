@@ -131,7 +131,7 @@ if __name__ == "__main__":
     del C
     #sys.exit()
     ##drop low freq term
-    ANet.prune(min_wf = 60) #10
+    ANet.prune(min_wf = 50) #10
 
     f = open("cole1.txt", "r")
     bg_pool = f.readlines()
@@ -162,7 +162,7 @@ if __name__ == "__main__":
 
 
 
-    toLoad = True
+    toLoad = False
     if toLoad:
         print("Loading weight matrix")
         ANet.W = np.load(root_mem_path + "/{}/pmi.npy".format(memory_path))

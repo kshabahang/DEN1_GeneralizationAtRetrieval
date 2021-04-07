@@ -56,9 +56,9 @@ if __name__ == "__main__":
 
     
     hparams = {"bank_labels":["t-{}".format(i) for i in range(K)],
-               "eps":0.0000001, 
+               "eps":1e-7, 
                "eta":1,
-               "alpha":1,
+               "alpha":1.001,
                "beta":1,
                "V0":N,
                "N":N,
@@ -72,11 +72,15 @@ if __name__ == "__main__":
                "gpu":False,
                "localist":False,
                "distributed":True,
-               "maxiter":100,
-               "explicit":False}
+               "maxiter":1000,
+               "explicit":True,
+               "sparse":False,
+               "row_center":False,
+               "col_center":False,
+               "norm":"pmi"}
     ANet = AssociativeNet(hparams)
 
-    memory_path = sys.argv[1]
+    memory_path = "TASA"#sys.argv[1]
 
 #    sweep_idx_i = int(sys.argv[2])
 #    sweep_idx_j = int(sys.argv[3])
@@ -92,13 +96,15 @@ if __name__ == "__main__":
     ANet.vocab = [vocab[i].strip() for i in range(len(vocab))]
     f.close()
     ANet.I = {ANet.vocab[i]:i for i in range(len(vocab))}
+    ANet.V = len(ANet.vocab)
+
+    comp_idx = int(sys.argv[1])
 
 
-    if hparams["distributed"]:
-        print("Constructing e-vecs")
-        obv = OBVGen(14)
-        #ANet.E = list(np.load(root_mem_path + "/{}/E{}.npy".format(memory_path, N)))
-        ANet.E = obv.E
+
+
+
+
 
     sparsifyEVECS = False
     if sparsifyEVECS:
@@ -124,101 +130,160 @@ if __name__ == "__main__":
         C[:, :] += load_csr(root_mem_path + "/{}/C_{}_{}".format(memory_path, IDX, totalChunks), (V*K, V*K), dtype=np.int64)
 
 #    C -= np.diag(np.array(C.diagonal()).flatten())
+    ANet.A = None
 
     ANet.COUNTS = csr_matrix(C)
     del C
-    print("Crunching out the weights...")
-    ANet.compute_weights(binaryMat=True)
-    ANet.nullvec = np.zeros((K*N))
-#    ANet.nullvec = lil_matrix((1, K*N))
-
     if ANet.hparams["gpu"]:
         ANet.nullvec = ANet.nullvec.cuda()
+
+    ANet.prune(min_wf = 100) #50 works
+
+
+
+    if hparams["distributed"]:
+        print("Constructing e-vecs")
+        obv = OBVGen(14)
+        #ANet.E = list(np.load(root_mem_path + "/{}/E{}.npy".format(memory_path, N)))
+        ANet.E = obv.E[:ANet.V]
+
+
+
+    toLoad = False
+    if toLoad:
+        print("Loading weight matrix")
+        ANet.W = np.load(root_mem_path + "/{}/pmi.npy".format(memory_path))
+        print("Loading eigenspectrum")
+        ANet.ei = np.load(root_mem_path + "/{}/ei_pmi.npy".format(memory_path))
+        ANet.ev = np.load(root_mem_path + "/{}/ev_pmi.npy".format(memory_path))
+        ANet.W /= ANet.ei[0]
+    else:
+        print("Crunching out the weights...")
+        ANet.compute_weights(binaryMat=False)
+        #print("Saving weight matrix")
+        #np.save(root_mem_path + "/{}/pmi".format(memory_path), ANet.W )
+        ANet.update_eig()
+        #print("Saving eigenspectrum")
+        #np.save(root_mem_path + "/{}/ei_pmi".format(memory_path), ANet.ei )
+        #np.save(root_mem_path + "/{}/ev_pmi".format(memory_path), ANet.ev )
+
+
+
+    pbar = ProgressBar(maxval=10).start()
+    W_new = np.zeros((2*ANet.E[0].shape[0],2*ANet.E[0].shape[0]))
+    for i in range(10):        
+        for j in range(10):
+            x_in = np.hstack([ANet.E[i], ANet.E[j]])
+            W_new += ANet.W[i, j]*np.outer(x_in, x_in)
+        pbar.update(i+1)
+
+
+
+
 
     
     toLesion = True
 
-    if True: 
+    pairs = "VB_RBR_2_RBR_VB PPRS_NN_2_PPR_NN IN_VBG_2_IN_VBP NNS_VBP_2_NN_VBP NN_VBZ_2_NN_VBP DT_NN_2_NN_DT JJ_NN_2_NN_JJ NN_IN_2_IN_NN PPR_VBP_2_PPRS_VBP".split()#[1:]
+
+    runSet = sys.argv[2] == "bgs"
+
+    if runSet:
 
         grammatical = "VB_RBR PPRS_NN IN_VBG NNS_VBP NN_VBZ DT_NN JJ_NN NN_IN PPR_VBP".split()
         ungrammatical="RBR_VB PPR_NN IN_VBP NN_VBP NN_VBP NN_DT NN_JJ IN_NN PPRS_VBP".split()
 
-        #for idx_gram in range(len(grammatical)):
 
-        #for idx_ugram in range(len(ungrammatical)):
 
-        #pair_set = pairs[sweep_idx]
-        #pair_set = grammatical[sweep_idx_i] + "_2_" + ungrammatical[sweep_idx_j]
-        #pair_set = grammatical[idx_gram] + "_2_" + ungrammatical[idx_ugram]
-        print(sys.argv[2])
+        pair_set = pairs[comp_idx]
 
-        f = open("../rsc/bigrams/" +sys.argv[2] + ".txt", "r")
-        probes = f.readlines()
+        print (pair_set)
+
+
+        #f = open("../rsc/bigrams/" +grammatical[i] + ".txt", "r")
+        #probes_g = f.readlines()
+        #f.close()
+
+        #f = open("../rsc/bigrams/" +ungrammatical[i] + ".txt", "r")
+        #probes_ug = f.readlines()
+        #f.close()
+
+        f = open("../rsc/to_run_NOVELS"+ pair_set + ".txt", "r")
+        bgs = f.readlines()
         f.close()
 
-        
-        scores = {} # {"correct":{}, "incorrect":{}}
-        
-        bank_lbls = ['t-0', 't-1']
+        probes_g  = []
+        probes_ug = []
+        for l in range(len(bgs)):
+             [corrA, corrB, incorrA, incorrB] = bgs[l].split()
+             probes_g.append(corrA + " " + corrB)
+             probes_ug.append(incorrA + " " + incorrB)
 
-        for i in range(len(probes[:NSamples])):
-        
-            probe = probes[i]
-        
-            [w1, w2] = probe.split()
- 
-            if toLesion:
-                #lesion
-                if ANet.hparams['explicit']:
-                    a2b = deepcopy(ANet.W[ANet.I[w1],ANet.N + ANet.I[w2]])
-                    b2a = deepcopy(ANet.W[ANet.N + ANet.I[w2],ANet.I[w1]])
-                    ANet.W[ANet.I[w1],ANet.N + ANet.I[w2]] = 0
-                    ANet.W[ANet.N + ANet.I[w2],ANet.I[w1]] = 0
-                    assert(ANet.W[ANet.I[w1],ANet.N + ANet.I[w2]] == 0)
-                    assert(ANet.W[ANet.N + ANet.I[w2],ANet.I[w1]] == 0)
-                else:
-                    a2b = deepcopy(ANet.WEIGHTS[0][1][ANet.I[w1],ANet.I[w2]]) 
-                    b2a = deepcopy(ANet.WEIGHTS[1][0][ANet.I[w2],ANet.I[w1]])
-                    ANet.WEIGHTS[0][1][ANet.I[w1],ANet.I[w2]] = 0
-                    ANet.WEIGHTS[1][0][ANet.I[w2],ANet.I[w1]] = 0
-            
-                    assert(ANet.WEIGHTS[0][1][ANet.I[w1], ANet.I[w2]] == 0) 
-                    assert(ANet.WEIGHTS[1][0][ANet.I[w2], ANet.I[w1]] == 0)
-         
-            
-        
-            ANet.probe(probe, toNorm = True)
-        
-            terminal = ' '.join([ANet.banks[bank_lbls[j]][0][0] for j in range(len(bank_lbls))])
-            #change = round(np.linalg.norm(ANet.frames[0] - ANet.frames[-1]), 3)
-            #cycles = len(ANet.frames)
-        
-            if "vlens" not in scores:
-                scores["vlens"] = [ANet.vlens]
-                scores["ncycles"] = [ANet.count]
-              #  scores[labels[i]]["change"] = [change]
-              #  scores[labels[i]]["terminal"] = [terminal]
-                scores["probe"] = [probe]
-#                scores["freq"] = [frq]
-              #  scores[labels[i]]["frames"] = [ANet.frames]
-            else:
-                scores["vlens"].append(ANet.vlens)
-                scores["ncycles"].append(ANet.count)
-               # scores[labels[i]]["change"].append(change)
-               # scores[labels[i]]["terminal"].append(terminal)
-                scores["probe"].append(probe)                
-#                scores["freq"].append(frq)
-              #  scores[labels[i]]["frames"].append(ANet.frames)
-        
-        
-        if toLesion: 
-            #reset
-            if ANet.hparams['explicit']:
-                ANet.W[ANet.I[w1],ANet.N + ANet.I[w2]] = deepcopy(a2b)
-                ANet.W[ANet.N + ANet.I[w2],ANet.I[w1]] = deepcopy(b2a)
-            else:
-                ANet.WEIGHTS[0][1][ANet.I[w1],ANet.I[w2]] = deepcopy(a2b)
-                ANet.WEIGHTS[1][0][ANet.I[w2],ANet.I[w1]] = deepcopy(b2a)
+
+
+
+        scores = {"correct":{}, "incorrect":{}}
+        corr_lens = []
+        incorr_lens=[]
+
+        corr_lens1 = [] ##save the first length
+        incorr_lens1 = []
+
+
+
+        for k in range(len(bgs)):
+            #(frq, [correct, incorrect]) = pair_items[k]
+            frq = 0
+            correct = probes_g[k]
+            incorrect = probes_ug[k]
+
+
+
+            print (frq, correct, incorrect)
+
+            bank_lbls = ['t-0', 't-1']
+
+
+            labels = ["correct", "incorrect"]
+            probes = [correct, incorrect]
+
+            [w1_c, w2_c] = correct.split()
+            [w1_i, w2_i] = incorrect.split()
+
+            if w1_c in ANet.I and w2_c in ANet.I and w1_i in ANet.I and w2_i in ANet.I:
+                if toLesion:
+                    ANet - (w1_c, w2_c)
+
+                for i in range(len(probes)):
+                    probe = probes[i]
+
+                    ANet.probe(probe)
+
+                    terminal = ' '.join([ANet.banks[bank_lbls[j]][0][0] for j in range(len(bank_lbls))])
+                    #change = round(np.linalg.norm(ANet.frames[0] - ANet.frames[-1]), 3)
+                    cycles = ANet.count
+                    if i == 0:
+                        corr_lens.append(ANet.vlens[-1][0])
+                        corr_lens1.append(ANet.vlens[1][0])
+                    else:
+                        incorr_lens.append(ANet.vlens[-1][0])
+                        incorr_lens1.append(ANet.vlens[1][0])
+
+                    if "vlens" not in scores[labels[i]]:
+                        scores[labels[i]]["vlens"] = [ANet.vlens[-1]]
+                        scores[labels[i]]["vlens1"] = [ANet.vlens[1]]
+                        #scores[labels[i]]["ncycles"] = [len(ANet.frames)]
+                        scores[labels[i]]["probe"] = [probe]
+                        scores[labels[i]]["freq"] = [frq]
+                    else:
+                        scores[labels[i]]["vlens"].append(ANet.vlens[-1])
+                        scores[labels[i]]["vlens1"].append(ANet.vlens[1])
+                        #scores[labels[i]]["ncycles"].append(len(ANet.frames))
+                        scores[labels[i]]["probe"].append(probe)
+                        scores[labels[i]]["freq"].append(frq)
+
+                if toLesion:
+                    ~ ANet #reset
 
 
         if toLesion:
@@ -226,9 +291,107 @@ if __name__ == "__main__":
         else:
             print("Not lesioned")
 
-        f = open(root_mem_path + "/"+sys.argv[2] + "_output_bsb.pkl", "wb")
+        corr_lens = np.array(corr_lens)
+        incorr_lens = np.array(incorr_lens)
+        #print("Is symmetric: ", np.sum(np.abs((ANet.W - ANet.W.T).data)) == 0)
+        #ANet.print_eigenspectrum()
+        print("meanCorr meanIncorr stdCorr stdIncorr meanDiff stdDiff")
+        print(np.mean(corr_lens), np.mean(incorr_lens), np.std(corr_lens), np.std(incorr_lens), (corr_lens - incorr_lens).mean(), (corr_lens - incorr_lens).std(), (corr_lens - incorr_lens).mean()/(corr_lens - incorr_lens).std())
+
+        f = open(root_mem_path + "/"+pair_set + "_{}_bsb.pkl".format(memory_path), "wb")
         pickle.dump(scores, f)
         f.close()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
