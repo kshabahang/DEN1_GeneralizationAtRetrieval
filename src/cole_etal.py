@@ -141,7 +141,7 @@ if __name__ == "__main__":
     if ANet.hparams["gpu"]:
         ANet.nullvec = ANet.nullvec.cuda()
     
-    toLesion = True
+    toLesion = False
 
 
     f = open("cole_stims.pkl", "rb")
@@ -206,12 +206,12 @@ if __name__ == "__main__":
                     cycles = ANet.count
         
                     if "vlens" not in scores[labels_open[i]]:
-                        scores[labels_open[i]]["vlens"] = [ANet.vlens[-1]]
+                        scores[labels_open[i]]["vlens"] = [ANet.vlens]
                         #scores[labels[i]]["ncycles"] = [len(ANet.frames)]
                         scores[labels_open[i]]["probe"] = [probe]
                         scores[labels_open[i]]["freq"] = [frq]
                     else:
-                        scores[labels_open[i]]["vlens"].append(ANet.vlens[-1])
+                        scores[labels_open[i]]["vlens"].append(ANet.vlens)
                         #scores[labels[i]]["ncycles"].append(len(ANet.frames))
                         scores[labels_open[i]]["probe"].append(probe)                
                         scores[labels_open[i]]["freq"].append(frq)
@@ -237,12 +237,12 @@ if __name__ == "__main__":
                     cycles = ANet.count
         
                     if "vlens" not in scores[labels_close[i]]:
-                        scores[labels_close[i]]["vlens"] = [ANet.vlens[-1]]
+                        scores[labels_close[i]]["vlens"] = [ANet.vlens]
                         #scores[labels[i]]["ncycles"] = [len(ANet.frames)]
                         scores[labels_close[i]]["probe"] = [probe]
                         scores[labels_close[i]]["freq"] = [frq]
                     else:
-                        scores[labels_close[i]]["vlens"].append(ANet.vlens[-1])
+                        scores[labels_close[i]]["vlens"].append(ANet.vlens)
                         #scores[labels[i]]["ncycles"].append(len(ANet.frames))
                         scores[labels_close[i]]["probe"].append(probe)                
                         scores[labels_close[i]]["freq"].append(frq)
@@ -258,7 +258,7 @@ if __name__ == "__main__":
             print("Not lesioned")
 
 
-        f = open(root_mem_path + "/{}/cole.pkl".format(memory_path), "wb")
+        f = open(root_mem_path + "/{}/cole_intact.pkl".format(memory_path), "wb")
         pickle.dump(scores, f)
         f.close()
 
