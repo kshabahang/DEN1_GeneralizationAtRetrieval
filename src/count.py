@@ -128,6 +128,7 @@ if __name__ == "__main__":
         print("Computing bi-gram counts...")
 #        C = np.zeros((K*V, K*V))
         C = lil_matrix((K*V, K*V), dtype=np.int64)
+        unigram_counts = {i:0 for i in range(V)}
 
         Ds = [lil_matrix((K*V, K*V), dtype=np.int64) for m in range(len(MAXDs))]
 
@@ -135,8 +136,10 @@ if __name__ == "__main__":
         pbar = ProgressBar(maxval = len(corpus_int) - 1).start()
         A = lil_matrix((len(corpus_int) - 1, K*V), dtype=np.int32) #data matrix
         for i in range(len(corpus_int) - 1):
+            unigram_counts[corpus_int[i]] += 1
             A[i, corpus_int[i]] = A[i, V + corpus_int[i+1]] = 1
             pbar.update(i+1)
+        unigram_counts[corpus_int[-1]] += 1
 
         pbar = ProgressBar(maxval=K**2).start()
         for k in range(K):
@@ -179,6 +182,11 @@ if __name__ == "__main__":
             os.system("mv D{}_* {}/{}/".format(MAXDs[i], root_mem_path, memory_path))
 
         os.system("mv C_* {}/{}/".format(root_mem_path, memory_path))
+
+        f = open("unigram_counts.pkl", "wb")
+        pickle.dump(unigram_counts, f)
+        f.close()
+        os.system("mv unigram* {}/{}/".format(root_mem_path, memory_path))
 
         f = open("A_log.txt", "w")
         f.write("{} {}".format(A.shape[0], A.shape[1]))

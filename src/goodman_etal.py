@@ -83,7 +83,7 @@ if __name__ == "__main__":
 
     hparams = {"bank_labels":["t-{}".format(i) for i in range(K)],
                "eps":1e-7,
-               "eta":1,
+               "eta":0.55,
                "alpha":1.001,
                "beta":1,
                "V0":N,
@@ -290,7 +290,7 @@ if __name__ == "__main__":
             print("Not lesioned")
 
 
-            f = open(root_mem_path + "/"+"output_goodman_etal_intact.pkl", "wb")
+            f = open(root_mem_path + "/"+"output_goodman_etal_intact_0p55nege1.pkl", "wb")
             pickle.dump(scores, f)
             f.close()
 

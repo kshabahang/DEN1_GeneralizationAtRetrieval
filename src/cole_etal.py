@@ -38,7 +38,7 @@ if __name__ == "__main__":
     
     hparams = {"bank_labels":["t-{}".format(i) for i in range(K)],
                "eps":1e-7, 
-               "eta":1,
+               "eta":0.55,
                "alpha":1.001,
                "beta":1,
                "V0":N,
@@ -157,13 +157,13 @@ if __name__ == "__main__":
 
     if runSet: 
 
-        scores = {"correct":{}, "incorrect":{}}
+        scores = {"correct_open":{}, "incorrect_number_open":{}, "incorrect_gender_open":{}, "correct_close":{}, "incorrect_number_close":{}, "incorrect_gender_close":{}}
         corr_lens = []
         incorr_lens=[]
 
 
 
-        for k in range(nouns):
+        for k in range(len(nouns)):
 
             close_C = stims[nouns[k]]["close"]
             open_C = stims[nouns[k]]["open"]
@@ -258,7 +258,7 @@ if __name__ == "__main__":
             print("Not lesioned")
 
 
-        f = open(root_mem_path + "/"+pair_set + "_{}_cole.pkl".format(memory_path), "wb")
+        f = open(root_mem_path + "/{}/cole.pkl".format(memory_path), "wb")
         pickle.dump(scores, f)
         f.close()
 
