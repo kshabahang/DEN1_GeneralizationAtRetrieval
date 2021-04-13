@@ -12,7 +12,7 @@ conds = ['intact','lesioned']
 #for cond in conds:
 if True:
     cond = 'Goodman'
-    fname = "output_goodman_etal_intact.pkl"
+    fname = "output_goodman_etal_intact_0p55nege1.pkl"
     
     f = open(fname, "rb")
     goodman = pickle.load(f)

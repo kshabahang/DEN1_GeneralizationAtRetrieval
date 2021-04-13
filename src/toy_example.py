@@ -117,7 +117,7 @@ if __name__ == "__main__":
     conds = "old_strong old_weak old_strong_part old_weak_part new1 new2 odd1 odd2".split()
     # conds = "new1 odd2".split()
     #conds = "old_strong_part old_weak_part new1 new2 odd1 odd2".split()[:2]
-    niter = 1000
+    niter = 10
     results_by_cond = {}
     #conds = "old_strong_part old_weak_part".split()
 
