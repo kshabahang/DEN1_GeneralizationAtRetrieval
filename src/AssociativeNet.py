@@ -117,7 +117,7 @@ class AssociativeNet(Model):
                 banks += bank_k
             elif self.hparams["distributed"]:
                 for i in range(len(self.vocab)):
-                    bank_k.append( vcos(np.array(self.E[i]), self.echo_full[k*self.N:(k+1)*self.N])) 
+                    bank_k.append( np.abs(vcos(np.array(self.E[i]), self.echo_full[k*self.N:(k+1)*self.N])) ) 
                 banks += bank_k
 
         self.strengths = np.array(banks)

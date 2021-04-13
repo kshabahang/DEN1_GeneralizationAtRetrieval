@@ -42,14 +42,14 @@ if __name__ == "__main__":
     
     
     hparams = {"bank_labels":["t-{}".format(i) for i in range(K)],
-               "eps":0.0000001, 
+               "eps":1e-12, 
                "eta":1,
                "alpha":1,
                "beta":1,
                "V0":V0,
                "N":N,
-               "localist":True,
-               "distributed": False,
+               "localist":False,
+               "distributed": True,
                "init_weights":True,
                "explicit":True,
                "idx_predict":1,
@@ -57,20 +57,22 @@ if __name__ == "__main__":
                "numSlots":K,
                "C":1,
                "mode":"numpy",
-               "maxiter":1000,
+               "maxiter":10000,
                "feedback":"stp", #linear / saturate (BSB) / stp (DEN)
                "gpu":False,
-               "sparse":False}
+               "sparse":False,
+               "norm":"pmi"}
     ANet = AssociativeNet(hparams)
     
-    strength = 0.5
+    strength = 1#0.5
      #feedback = "linear"#sys.argv[1]
-    noise =0.1#0.2#float(sys.argv[2])
+    noise =0.2#0.2#float(sys.argv[2])
     
     p_a = "the cat"
     p_b = "a dog"
     
     ANet.nullvec = np.zeros(N*K)
+    ANet.ev = np.zeros((N*K, 2)) #fake
     
     if hparams["distributed"]:
         wvecs = {"the":[1,1,-1,-1], "cat":[-1,1,-1,1], "a":[1,1,1,1], "dog":[1,-1,-1,1]}
@@ -81,8 +83,8 @@ if __name__ == "__main__":
         ANet.update_vocab(p_a.split())
         ANet.update_vocab(p_b.split())
     
-    ANet.encode(p_a, st=1.2)
-    ANet.encode(p_b, st=1.1)
+    ANet.encode(p_a, st=1.2) #1.2
+    ANet.encode(p_b, st=1.1) #1.1
     
     ei, ev = np.linalg.eig(ANet.W)
     isort = np.argsort(ei)[::-1]
@@ -117,7 +119,7 @@ if __name__ == "__main__":
     conds = "old_strong old_weak old_strong_part old_weak_part new1 new2 odd1 odd2".split()
     # conds = "new1 odd2".split()
     #conds = "old_strong_part old_weak_part new1 new2 odd1 odd2".split()[:2]
-    niter = 10
+    niter = 100
     results_by_cond = {}
     #conds = "old_strong_part old_weak_part".split()
 
@@ -145,7 +147,7 @@ if __name__ == "__main__":
     
         for k in range(niter):
     
-            ANet.probe(probe, st = strength, noise = noise)
+            ANet.probe(probe, st = strength, noise = noise, verbose=False)
 
             x0 = ANet.frames[0]/np.linalg.norm(ANet.frames[0])
             xn = ANet.frames[-1]/np.linalg.norm(ANet.frames[-1])
@@ -252,7 +254,7 @@ if __name__ == "__main__":
         sns.set_theme(style="ticks")
         palette = sns.color_palette("Set2")
         plot = sns.relplot(data = df, x='Iteration', y='Activation', col="Slot", style="Word", kind="line", hue="Word", palette="dark", linewidth=4)
-        plot.set(ylim=(0,0.8))
+        plot.set(ylim=(0,1))
 
     
         if hparams['feedback'] == 'stp':        
