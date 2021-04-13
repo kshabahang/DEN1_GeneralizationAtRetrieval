@@ -54,6 +54,8 @@ class AssociativeNet(Model):
                 self.feedback = self.feedback_stp_sparse
             else:
                 self.feedback = self.feedback_stp_dense
+        elif hparams["feedback"] == "persist":
+            self.feedback = self.feedback_persist_dense
         self.E = [] #environment vectors for dealing with {-1,1} vectors
 
 
@@ -594,6 +596,95 @@ class AssociativeNet(Model):
         self.frames = frames
         self.vlens  = vlens
         self.count = count
+
+
+    def feedback_persist_dense(self):
+        '''recurrence with stp (i.e., DEN)'''
+        ###compute strengths for the initial input pattern in buffer
+        #self.compute_sts()
+        #self.sort_banks()
+        self.top_weights = []
+        #self.view_banks(5)
+        frames=  [deepcopy(self.echo_full)]
+
+        #self.get_top_connect() 
+    
+
+        vlens = [(norm(self.echo_full), norm(self.echo_full[:self.V]), norm(self.echo_full[self.V:]))]
+
+        print("Adding STP")
+        ###compute the next state
+        x0 = 1*self.echo_full #for STP
+        #nnz0 = np.where(x0 != 0)[0]
+        #for ii in nnz0:
+        #    for jj in nnz0:
+        #        self.W[ii, jj] += self.alpha*x0[ii]*x0[jj]
+
+        try: #this is here to ensure stp is taken back out in case of interruption..feel free to crt-c out
+            x = 1*self.echo_full
+            x_new = x.dot(self.W) - self.eta*x.dot(self.ev[:, 0])*self.ev[:, 0] + self.alpha*x0
+            vlen = float(norm(x_new))
+            vlen1= float(norm(x_new[:self.V]))
+            vlen2= float(norm(x_new[self.V:]))
+            vlens.append((vlen, vlen1, vlen2))
+            x_new = x_new/vlen
+            diff = norm(x - x_new)
+            count = 0
+
+            while(diff > self.eps and count < self.maxiter):
+                count += 1
+                ###load buffer with new state 
+
+                x = 1*x_new
+                self.echo_full = 1*x_new #1*x_new
+
+                #self.get_top_connect()
+                self.compute_sts() #compute strengths with updated buffer
+                self.sort_banks() 
+                self.view_banks(5)
+
+
+                ###compute the next state
+                x_new = x.dot(self.W) - self.eta*x.dot(self.ev[:, 0])*self.ev[:, 0] + self.alpha*x0
+
+                vlen = float(norm(x_new))
+                vlen1= float(norm(x_new[:self.V]))
+                vlen2= float(norm(x_new[self.V:]))
+                vlens.append((vlen, vlen1, vlen2))
+
+                frames.append(deepcopy(x_new ))
+                x_new = x_new/vlen
+
+                diff =  float(norm(x - x_new))
+
+
+            #for ii in nnz0:
+            #    for jj in nnz0:
+            #        self.W[ii, jj] -= self.alpha*x0[ii]*x0[jj]
+                
+        except Exception as e:
+            count = 0 #reset weights to before stp
+            print(e)
+            #for ii in nnz0:
+            #    for jj in nnz0:
+            #        self.W[ii, jj] -= self.alpha*x0[ii]*x0[jj]
+
+
+
+
+
+        self.echo_full = 1*x_new
+
+
+        print(self.echo_full.shape)
+
+        self.compute_sts() #compute strengths with updated buffer
+        self.sort_banks()
+        self.view_banks(5)
+        self.frames = frames
+        self.vlens  = vlens
+        self.count = count
+
 
 
 
