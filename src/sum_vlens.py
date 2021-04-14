@@ -21,7 +21,7 @@ bad_examples = {}
 good_examples={}
 for i in range(len(pairs)):
     try:
-        f = open("../rsc/partialInhibition_intact/{}_{}.pkl".format(pairs[i], corpus), "rb")
+        f = open("../rsc/partialInhibition_lesioned/{}_{}.pkl".format(pairs[i], corpus), "rb")
         bgs = pickle.load(f)
         f.close()
         
@@ -145,27 +145,27 @@ for i in range(len(frqLbls)):
 #df["Rank"] = df["Rank"].astype(int)
 #subplot = sns.barplot(x = "Rank", y = "Eigenvalue", data=df, palette='viridis')
 
-f = open("discVsRT.txt", "r")
-discVsRT = f.read().split('\n')[:-1]
-f.close()
-
-labels = []
-ds     = []
-rts    = []
-for i in range(len(discVsRT)):
-    [lbl, d, rt] = discVsRT[i].split('\t')
-    labels.append(lbl)
-    ds.append(float(d))
-    rts.append(float(rt))
-
-df = pd.DataFrame({"Comparison": labels, "Discriminability": ds, "Mean RT": rts})
-
-fig, ax = plt.subplots()
-df.plot('Discriminability', 'Mean RT', kind='scatter')
-for k, v in df.iterrows():
-    x = v["Discriminability"]
-    y = v["Mean RT"]
-    txt = '-'.join(v["Comparison"].split())
-    plt.text(x,y, txt)
+#f = open("discVsRT.txt", "r")
+#discVsRT = f.read().split('\n')[:-1]
+#f.close()
+#
+#labels = []
+#ds     = []
+#rts    = []
+#for i in range(len(discVsRT)):
+#    [lbl, d, rt] = discVsRT[i].split('\t')
+#    labels.append(lbl)
+#    ds.append(float(d))
+#    rts.append(float(rt))
+#
+#df = pd.DataFrame({"Comparison": labels, "Discriminability": ds, "Mean RT": rts})
+#
+#fig, ax = plt.subplots()
+#df.plot('Discriminability', 'Mean RT', kind='scatter')
+#for k, v in df.iterrows():
+#    x = v["Discriminability"]
+#    y = v["Mean RT"]
+#    txt = '-'.join(v["Comparison"].split())
+#    plt.text(x,y, txt)
 
 
