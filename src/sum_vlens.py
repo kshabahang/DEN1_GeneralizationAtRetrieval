@@ -21,7 +21,7 @@ bad_examples = {}
 good_examples={}
 for i in range(len(pairs)):
     try:
-        f = open("../rsc/partialInhibition_lesioned/{}_{}.pkl".format(pairs[i], corpus), "rb")
+        f = open("../rsc/partialInhibition_intact/{}_{}.pkl".format(pairs[i], corpus), "rb")
         bgs = pickle.load(f)
         f.close()
         
@@ -92,7 +92,11 @@ for bg_g in g_types:
         l += 1
     k += 1
         
-D = muDiff / (stdDiff + 1e-32) 
+D = muDiff / (stdDiff + 1e-32)
+fig = plt.figure()
+(im, cbar) = heatmap(D, g_types, ug_types, cmap = "PRGn")
+annotate_heatmap(im, D)
+fig.show()
 
 pCorrect = {}
 for i in range(len(pairs)):
