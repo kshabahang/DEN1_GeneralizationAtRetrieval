@@ -129,13 +129,17 @@ for i in range(len(ug_ws1)):
 #plt.show()
 #
 #
-#vlens = np.hstack([youknow_vlens[:, 0], yourknow_vlens[:, 0]])
-#iteration = list(range(len(youknow_vlens))) + list(range(len(yourknow_vlens)))
-#probe = ["you know"]*len(youknow_vlens) + ["your know"]*len(yourknow_vlens)
-#df = pd.DataFrame({"Familiarity": vlens, "Probe":probe, "Iteration":iteration})
-#
-#plot = sns.relplot(data = df, x='Iteration', y='Familiarity', hue= "Probe", style="Probe", kind="line", palette="dark", linewidth=5)
-#plt.show()
+
+sns.set(font_scale=1.5)
+sns.set_palette("viridis_r")
+vlens = np.hstack([youknow_vlens[:, 0], yourknow_vlens[:, 0]])
+iteration = list(range(len(youknow_vlens))) + list(range(len(yourknow_vlens)))
+probe = ["you know"]*len(youknow_vlens) + ["your know"]*len(yourknow_vlens)
+df = pd.DataFrame({"Familiarity": vlens, "Probe":probe, "Iteration":iteration})
+
+plot = sns.relplot(data = df, x='Iteration', y='Familiarity', hue= "Probe", style="Probe", kind="line", linewidth=5)
+
+plt.show()
 
 
 

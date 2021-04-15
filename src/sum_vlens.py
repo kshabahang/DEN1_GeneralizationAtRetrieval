@@ -46,14 +46,18 @@ for i in range(len(pairs)):
 
 plotDists = True
 if plotDists:
+
     dists = np.array([list(scores[pairs[i]]) + (80 - len(scores[pairs[i]]))*[0] for i in range(len(pairs))]) #padd missing with zeros
-    df = pd.DataFrame(dists.T, columns=pairs)
-    sns.set_palette("mako")
+    df = pd.DataFrame(dists.T, columns=list(map(lambda x : '-'.join(x.replace('2', 'to').split('_')) , pairs))  )
+    sns.set_palette("Purples_r")
     subplots = df.hist()
     for i in range(len(subplots)):
         for j in range(len(subplots[i])):
             subplots[i][j].axvline(0, color='red')
             subplots[i][j].grid(False)
+            subplots[i][j].axes.get_yaxis().set_visible(False)
+            subplots[i][j].axes.get_xaxis().set_visible(False)
+
 
 #fig, axarr = plt.subplots(nrows =3,ncols=3)
 #for i in range(3):
@@ -94,7 +98,8 @@ for bg_g in g_types:
         
 D = muDiff / (stdDiff + 1e-32)
 fig = plt.figure()
-(im, cbar) = heatmap(D, g_types, ug_types, cmap = "PRGn")
+(im, cbar) = heatmap(D, list(map(lambda x : '-'.join(x.replace('2', 'to').split('_')) , g_types)), 
+                        list(map(lambda x : '-'.join(x.replace('2', 'to').split('_')) , ug_types)), cmap = "PRGn")
 annotate_heatmap(im, D)
 fig.show()
 

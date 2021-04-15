@@ -274,9 +274,10 @@ for i in range(m):
 
 df = pd.DataFrame({"Activation": activation, "Word":word, "Slot": slot, "Iteration": iteration})
 
+
+palette = sns.color_palette("plasma")
 sns.set_theme(style="ticks")
-palette = sns.color_palette("Set2")
-plot = sns.relplot(data = df, x='Iteration', y='Activation', col="Slot", style="Word", kind="line", hue="Word", palette="dark", linewidth=8)
+plot = sns.relplot(data = df, x='Iteration', y='Activation', col="Slot", style="Word", kind="line", hue="Word", linewidth=8)
 plot.set(ylim=(0,1))
 plot.set(xlim=(0, min(len(frames_new), len(frames_odd))))
 plot.set_xticklabels(range(min(len(frames_new), len(frames_odd))))

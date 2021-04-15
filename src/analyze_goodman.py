@@ -32,16 +32,16 @@ if True:
     d = np.mean(goodman_corr - goodman_incr)/np.std(goodman_corr - goodman_incr)
 
 
-    sns.set_palette("mako") 
+    sns.set_palette("Purples_r") 
     N = 32
     print(N, ttest_rel(goodman_corr[:N], goodman_incr[:N]))
 
     fig = plt.figure()
     #sns.distplot(df['Congruent'], kde=False, label="Congruent")
     #sns.distplot(df['Incongruent'], kde=False, label="Incongruent")
-    sns.distplot(df["Difference"], kde=False)
+    plot = sns.distplot(df["Difference"], kde=False)
 #    plt.legend()
-    plt.axvline(0)
-    plt.xlabel("Familiarity(Congruent) - Familiarity(Incongruent)")
-    plt.ylabel("Frequency")
+    plt.axvline(0, color="red")
+    plot.set_xlabel("Familiarity difference", fontsize=15)
+    plot.set_ylabel("Frequency", fontsize=15)
     fig.show()
