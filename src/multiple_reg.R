@@ -14,18 +14,9 @@ colnames(centered) <- c("d", "RT", "fG", "fUG", "fG1", "fG2", "fUG1", "fUG2")
 
 
 
-model1 <- lm(RT ~ d + fG, data=centered)
-model2 <- lm(RT ~ d + fUG, data=centered)
-model3 <- lm(RT ~ d + fG1, data=centered)
-model4 <- lm(RT ~ d + fG2, data=centered)
-model5 <- lm(RT ~ d + fUG1, data=centered)
-model6 <- lm(RT ~ d + fUG2, data=centered)
-model7 <- lm(d ~ fG + fUG + fG1 + fG2 + fUG1 + fUG2, data=centered)
 
+freqModel <- lm(RT ~ fG + fUG + fG1 + fG2 + fUG1 + fUG2, data=centered)
+summary(freqModel)
 
-print(summary(model1))
-print(summary(model2))
-print(summary(model3))
-print(summary(model4))
-print(summary(model5))
-print(summary(model6))
+freqVsD <- lm(RT ~ fG + d, data=centered)
+summary(freqVsD)
