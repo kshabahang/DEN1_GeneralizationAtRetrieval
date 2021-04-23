@@ -1,7 +1,4 @@
-data <- read.table("/home/kevin/GitRepos/DEN1_GeneralizationAtRetrieval/rsc/freq_data.txt", header=TRUE)
-
-
-centered <- data.frame(data$Discriminability, data$MedianRT)
+data <- read.table("/home/hal9000/Repos/DEN1_GeneralizationAtRetrieval/rsc/freq_data.txt", header=TRUE)
 
 
 centered <- data.frame(scale(data$Discriminability, center=TRUE, scale=FALSE), 
