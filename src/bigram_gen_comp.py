@@ -134,7 +134,7 @@ if __name__ == "__main__":
     ##drop low freq term
     ANet.prune(min_wf = 50) #50 works
 
-    toLoad = True
+    toLoad = False
     if toLoad:
         print("Loading weight matrix")
         ANet.W = np.load(root_mem_path + "/{}/pmi.npy".format(memory_path))
