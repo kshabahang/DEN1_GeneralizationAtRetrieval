@@ -66,3 +66,14 @@ disc_gen_o = np.mean(d_gen_o)/np.std(d_gen_o)
 
 N = len(d_num_o)
 
+sns.set_palette("Greens_r")
+d_open = np.hstack([d_num_o, d_gen_o])
+d_close =np.hstack([d_num_c, d_gen_c])
+
+df = pd.DataFrame({"Familiarity difference": np.hstack([d_close, d_open]), "Context word": ['Close']*len(d_close) + ['Open']*len(d_open) })
+
+plot = sns.barplot(x="Context word", y="Familiarity difference", data=df, ci=68, capsize=0.1)
+plot.set(ylim=(0.00025, 0.00032))
+plot.set_xlabel("Context word", fontsize=15)
+plot.set_ylabel("Familiarity difference", fontsize=15)
+

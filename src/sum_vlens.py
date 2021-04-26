@@ -46,14 +46,18 @@ for i in range(len(pairs)):
 
 plotDists = True
 if plotDists:
+
     dists = np.array([list(scores[pairs[i]]) + (80 - len(scores[pairs[i]]))*[0] for i in range(len(pairs))]) #padd missing with zeros
-    df = pd.DataFrame(dists.T, columns=pairs)
-    sns.set_palette("mako")
+    df = pd.DataFrame(dists.T, columns=list(map(lambda x : '-'.join(x.replace('2', 'to').split('_')) , pairs))  )
+    sns.set_palette("Purples_r")
     subplots = df.hist()
     for i in range(len(subplots)):
         for j in range(len(subplots[i])):
             subplots[i][j].axvline(0, color='red')
             subplots[i][j].grid(False)
+            subplots[i][j].axes.get_yaxis().set_visible(False)
+            subplots[i][j].axes.get_xaxis().set_visible(False)
+
 
 #fig, axarr = plt.subplots(nrows =3,ncols=3)
 #for i in range(3):
@@ -76,6 +80,7 @@ if plotDists:
 distDiff = []
 muDiff = np.zeros((9,9))
 stdDiff = np.zeros((9,9))
+P = np.zeros((9,9))
 k = 0
 for bg_g in g_types:
     l = 0
@@ -88,11 +93,17 @@ for bg_g in g_types:
                 diffs.append(fam_g[i] - fam_ug[j])
         muDiff[k, l] = np.mean(diffs)
         stdDiff[k, l] = np.std(diffs)
+        P[k, l] = sum(np.array(diffs) > 0)/len(diffs)
         distDiff += diffs
         l += 1
     k += 1
         
-D = muDiff / (stdDiff + 1e-32) 
+D = muDiff / (stdDiff + 1e-32)
+fig = plt.figure()
+(im, cbar) = heatmap(D, list(map(lambda x : '-'.join(x.replace('2', 'to').split('_')) , g_types)), 
+                        list(map(lambda x : '-'.join(x.replace('2', 'to').split('_')) , ug_types)), cmap = "PRGn")
+annotate_heatmap(im, D)
+fig.show()
 
 pCorrect = {}
 for i in range(len(pairs)):
@@ -107,6 +118,7 @@ f.close()
 
 frqInfo= np.zeros((9,6))
 frqInfoFull = np.zeros((9,6, 80))
+print("pairs", "g_fr", "g1_fr", "g2_fr", "ug_fr", "ug1_fr", "ug2_fr")
 for i in range(len(pairs)):
     g, ug = stimFreqs[pairs[i]]
     
@@ -136,35 +148,36 @@ for i in range(len(frqLbls)):
 #fig.show()
 
 
-#f = open("eigvals.txt", "r")
-#eigvals = f.read().split('\n')
-#f.close()
-#
-#eigvals = np.array(eigvals[:-2]).astype(float)
-#df = pd.DataFrame(np.vstack([range(1,len(eigvals)+1), eigvals]).T, columns=["Rank", "Eigenvalue"])
-#df["Rank"] = df["Rank"].astype(int)
-#subplot = sns.barplot(x = "Rank", y = "Eigenvalue", data=df, palette='viridis')
+f = open("eigvals.txt", "r")
+eigvals = f.read().split('\n')
+f.close()
 
-f = open("discVsRT.txt", "r")
+eigvals = np.array(eigvals[:-2]).astype(float)
+df = pd.DataFrame(np.vstack([range(1,len(eigvals)+1), eigvals]).T, columns=["Rank", "Eigenvalue"])
+df["Rank"] = df["Rank"].astype(int)
+subplot = sns.barplot(x = "Rank", y = "Eigenvalue", data=df, palette='viridis')
+
+f = open("discVsRT_median.txt", "r")
 discVsRT = f.read().split('\n')[:-1]
 f.close()
 
+sns.set(font_scale=1.5)
 labels = []
 ds     = []
 rts    = []
 for i in range(len(discVsRT)):
     [lbl, d, rt] = discVsRT[i].split('\t')
-    labels.append(lbl)
+    labels.append('-'.join(lbl.replace('2', 'to').split('_')))
     ds.append(float(d))
     rts.append(float(rt))
 
-df = pd.DataFrame({"Comparison": labels, "Discriminability": ds, "Mean RT": rts})
-
-fig, ax = plt.subplots()
-df.plot('Discriminability', 'Mean RT', kind='scatter')
+df = pd.DataFrame({"Comparison": labels, "Discriminability": ds, "Median RT": rts})
+sns.scatterplot(data=df, x="Discriminability", y = "Median RT")
+#fig, ax = plt.subplots()
+#df.plot('Discriminability', 'Mean RT', kind='scatter')
 for k, v in df.iterrows():
     x = v["Discriminability"]
-    y = v["Mean RT"]
+    y = v["Median RT"]
     txt = '-'.join(v["Comparison"].split())
     plt.text(x,y, txt)
 
