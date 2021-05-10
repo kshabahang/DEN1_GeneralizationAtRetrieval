@@ -21,7 +21,7 @@ bad_examples = {}
 good_examples={}
 for i in range(len(pairs)):
     try:
-        f = open("../rsc/partialInhibition_intact/{}_{}.pkl".format(pairs[i], corpus), "rb")
+        f = open("../rsc/partialInhibition_lesioned/{}_{}.pkl".format(pairs[i], corpus), "rb")
         bgs = pickle.load(f)
         f.close()
         
@@ -148,37 +148,37 @@ for i in range(len(frqLbls)):
 #fig.show()
 
 
-f = open("eigvals.txt", "r")
-eigvals = f.read().split('\n')
-f.close()
+#f = open("eigvals.txt", "r")
+#eigvals = f.read().split('\n')
+#f.close()
+#
+#eigvals = np.array(eigvals[:-2]).astype(float)
+#df = pd.DataFrame(np.vstack([range(1,len(eigvals)+1), eigvals]).T, columns=["Rank", "Eigenvalue"])
+#df["Rank"] = df["Rank"].astype(int)
+#subplot = sns.barplot(x = "Rank", y = "Eigenvalue", data=df, palette='viridis')
+#
+#f = open("discVsRT_median.txt", "r")
+#discVsRT = f.read().split('\n')[:-1]
+#f.close()
+#
+#sns.set(font_scale=1.5)
+#labels = []
+#ds     = []
+#rts    = []
+#for i in range(len(discVsRT)):
+#    [lbl, d, rt] = discVsRT[i].split('\t')
+#    labels.append('-'.join(lbl.replace('2', 'to').split('_')))
+#    ds.append(float(d))
+#    rts.append(float(rt))
 
-eigvals = np.array(eigvals[:-2]).astype(float)
-df = pd.DataFrame(np.vstack([range(1,len(eigvals)+1), eigvals]).T, columns=["Rank", "Eigenvalue"])
-df["Rank"] = df["Rank"].astype(int)
-subplot = sns.barplot(x = "Rank", y = "Eigenvalue", data=df, palette='viridis')
-
-f = open("discVsRT_median.txt", "r")
-discVsRT = f.read().split('\n')[:-1]
-f.close()
-
-sns.set(font_scale=1.5)
-labels = []
-ds     = []
-rts    = []
-for i in range(len(discVsRT)):
-    [lbl, d, rt] = discVsRT[i].split('\t')
-    labels.append('-'.join(lbl.replace('2', 'to').split('_')))
-    ds.append(float(d))
-    rts.append(float(rt))
-
-df = pd.DataFrame({"Comparison": labels, "Discriminability": ds, "Median RT": rts})
-sns.scatterplot(data=df, x="Discriminability", y = "Median RT")
-#fig, ax = plt.subplots()
-#df.plot('Discriminability', 'Mean RT', kind='scatter')
-for k, v in df.iterrows():
-    x = v["Discriminability"]
-    y = v["Median RT"]
-    txt = '-'.join(v["Comparison"].split())
-    plt.text(x,y, txt)
+#df = pd.DataFrame({"Comparison": labels, "Discriminability": ds, "Median RT": rts})
+#sns.scatterplot(data=df, x="Discriminability", y = "Median RT")
+##fig, ax = plt.subplots()
+##df.plot('Discriminability', 'Mean RT', kind='scatter')
+#for k, v in df.iterrows():
+#    x = v["Discriminability"]
+#    y = v["Median RT"]
+#    txt = '-'.join(v["Comparison"].split())
+#    plt.text(x,y, txt)
 
 
