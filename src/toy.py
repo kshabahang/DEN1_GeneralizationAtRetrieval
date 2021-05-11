@@ -19,9 +19,10 @@ vectors = [[1,1,-1,-1], [-1,1,-1,1], [1,1,1,1], [1,-1,-1,1]]
 
 
 #wvecs = {"the":[1,1,-1,-1], "cat":[-1,1,-1,1], "a":[1,1,1,1], "dog":[1,-1,-1,1]}
+wvecs = {"the":[1,1,1,1], "cat":[-1,1,-1,1], "a":[1,-1,-1,1], "dog":[1,1,-1,-1]}
 vocab = ['the','cat', 'a', 'dog']
 
-NIterProbe = 500
+NIterProbe = 1
 NIterEncode=1
 
 
@@ -29,12 +30,12 @@ resps = {}
 
 
 for m in range(NIterEncode):
-    word_assignment = list(range(len(vocab)))
-    np.random.shuffle(word_assignment)
+    #word_assignment = list(range(len(vocab)))
+    #np.random.shuffle(word_assignment)
     
-    wvecs = {vocab[word_assignment[i]]:vectors[i] for i in range(len(vocab))}
-    for j in range(len(vocab)):
-        print(vocab[j], wvecs[vocab[j]])
+    #wvecs = {vocab[word_assignment[i]]:vectors[i] for i in range(len(vocab))}
+    #for j in range(len(vocab)):
+    #    print(vocab[j], wvecs[vocab[j]])
     
     #wvecs = {w:wvecs[w]/np.linalg.norm(wvecs[w]) for w in wvecs.keys()}
     
@@ -65,7 +66,7 @@ for m in range(NIterEncode):
     print(ev[:, isort])
 
     runDEN = True
-    runBSB = False
+    runBSB = True
     
     noise = 0.3
     
@@ -84,13 +85,21 @@ for m in range(NIterEncode):
                 x_prime = probe.dot(W_prime)
                 x_prime /= np.linalg.norm(x_prime)
                 loadings.append(x_prime.dot(ev[isort].T))
+                sts = []
+                states = []
                 k = 1
                 while(np.linalg.norm(x - x_prime) > 1e-7):
                     x = 1*x_prime
                     x_prime = x.dot(W_prime)
                     x_prime /= np.linalg.norm(x_prime)
                     k += 1
-                    loadings.append(x_prime.dot(ev[isort].T))               
+                    loadings.append(x_prime.dot(ev[isort].T))        
+
+                    s1 = np.array([vcos(x_prime[:4], wvec_mat[j]) for j in range(len(vocab))])
+                    s2 = np.array([vcos(x_prime[4:], wvec_mat[j]) for j in range(len(vocab))])
+                    sts.append([s1,s2])
+                    states.append(x_prime)
+
                 
                 s1 = np.array([np.abs(vcos(x_prime[:4], wvec_mat[j])) for j in range(len(vocab))])
                 s2 = np.array([np.abs(vcos(x_prime[4:], wvec_mat[j])) for j in range(len(vocab))])
@@ -147,13 +156,13 @@ for m in range(NIterEncode):
                 print(cue, counts[cue]/NIterProbe)
 
 
-toPlot = False
+toPlot = True#False
 if toPlot:
     ###DEN plots
-    p_fine  = probes['new1']
-    p_odd   = probes['odd1']
+    p_fine  = probes['new2']
+    p_odd   = probes['odd2']
     fam_new = []
-    frames = {"the dog":[], "dog the":[]}
+    frames = {"a cat":[], "cat a":[]}
     
     probe = p_fine + np.random.normal(0, noise)
     probe /= np.linalg.norm(probe)
@@ -166,7 +175,7 @@ if toPlot:
     s1 = np.array([np.abs(vcos(x_prime[:4], wvec_mat[j])) for j in range(len(vocab))])
     s2 = np.array([np.abs(vcos(x_prime[4:], wvec_mat[j])) for j in range(len(vocab))])
     
-    frames["the dog"].append(np.hstack([s1,s2]))
+    frames["a cat"].append(np.hstack([s1,s2]))
     
     
     k = 1
@@ -181,7 +190,7 @@ if toPlot:
     
     
     
-        frames["the dog"].append(np.hstack([s1,s2]))
+        frames["a cat"].append(np.hstack([s1,s2]))
         k += 1
     
                                                                                        
@@ -196,7 +205,7 @@ if toPlot:
     
     
     
-    frames_new = np.array(frames['the dog'])
+    frames_new = np.array(frames['a cat'])
     fam_odd = []
     probe = p_odd + np.random.normal(0, noise)
     probe /= np.linalg.norm(probe)
@@ -208,7 +217,7 @@ if toPlot:
     s1 = np.array([np.abs(vcos(x_prime[:4], wvec_mat[j])) for j in range(len(vocab))])
     s2 = np.array([np.abs(vcos(x_prime[4:], wvec_mat[j])) for j in range(len(vocab))])
     
-    frames["dog the"].append(np.hstack([s1,s2]))
+    frames["cat a"].append(np.hstack([s1,s2]))
     
     k = 1
     while(np.linalg.norm(x - x_prime) > 1e-7):
@@ -220,10 +229,12 @@ if toPlot:
     
         s1 = np.array([np.abs(vcos(x_prime[:4], wvec_mat[j])) for j in range(len(vocab))])
         s2 = np.array([np.abs(vcos(x_prime[4:], wvec_mat[j])) for j in range(len(vocab))])
+   
+        #s1 = np.array([vcos(x_prime[:4], wvec_mat[j]) for j in range(len(vocab))])
+        #s2 = np.array([vcos(x_prime[4:], wvec_mat[j]) for j in range(len(vocab))])
     
     
-    
-        frames["dog the"].append(np.hstack([s1,s2]))
+        frames["cat a"].append(np.hstack([s1,s2]))
         k += 1
     
                                                                                        
@@ -236,8 +247,8 @@ if toPlot:
     
     resp = w1 + " " + w2
     
-    frames_new = np.array(frames['the dog'])
-    frames_odd = np.array(frames['dog the'])
+    frames_new = np.array(frames['a cat'])
+    frames_odd = np.array(frames['cat a'])
     
     
     
@@ -256,15 +267,19 @@ if toPlot:
         word += [vocab[i%4]]*n
     
     df = pd.DataFrame({"Activation": activation, "Word":word, "Slot": slot, "Iteration": iteration})
-    
+   
+
+    sns.set(font_scale=5)
     sns.set_theme(style="ticks")
     palette = sns.color_palette("Set2")
     plot = sns.relplot(data = df, x='Iteration', y='Activation', col="Slot", style="Word", kind="line", hue="Word", palette="dark", linewidth=8)
     plot.set(ylim=(0,1))
     plot.set(xlim=(0, min(len(frames_new), len(frames_odd))))
     plot.set_xticklabels(range(min(len(frames_new), len(frames_odd))))
-    
-    
+    plot.set_xticklabels(size=15) 
+    plot.set_yticklabels(size=15)
+    plot.set_xlabels("Iteration", fontsize=20)
+    plot.set_ylabels("Activation", fontsize=20)
     
     
     
@@ -291,4 +306,11 @@ if toPlot:
     plot.set(ylim=(0,1))
     plot.set(xlim=(0, min(len(frames_new), len(frames_odd))))
     plot.set_xticklabels(range(min(len(frames_new), len(frames_odd))))
+    plot.set_xticklabels(size=15) 
+    plot.set_yticklabels(size=15)
+    plot.set_xlabels("Iteration", fontsize=20)
+    plot.set_ylabels("Activation", fontsize=20)
+
+
+
     plt.show()
