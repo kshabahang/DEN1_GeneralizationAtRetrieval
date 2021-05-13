@@ -1,7 +1,7 @@
 from matplotlib import pyplot as plt
 import pickle
 import numpy as np
-from scipy.stats import ttest_reli, ttest_ind
+from scipy.stats import ttest_rel, ttest_ind
 import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt

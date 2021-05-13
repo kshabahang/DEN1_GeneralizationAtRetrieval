@@ -66,7 +66,7 @@ disc_gen_o = np.mean(d_gen_o)/np.std(d_gen_o)
 
 N = len(d_num_o)
 
-sns.set_palette("Greens_r")
+sns.set_palette("vlag")
 d_open = np.hstack([d_num_o, d_gen_o])
 d_close =np.hstack([d_num_c, d_gen_c])
 
@@ -77,3 +77,18 @@ plot.set(ylim=(0.00025, 0.00032))
 plot.set_xlabel("Context word", fontsize=15)
 plot.set_ylabel("Familiarity difference", fontsize=15)
 
+
+df2 = pd.DataFrame({"Familiarity difference": np.hstack([d_num_o, d_num_c, d_gen_o, d_gen_c]), 
+                    "Context word": ['Open']*len(d_num_o) + ['Close']*len(d_num_c) + ['Open']*len(d_gen_o) + ['Close']*len(d_gen_c), 
+                    "Vocabulary": ['Number']*(len(d_num_o) + len(d_num_c)) + ['Gender']*(len(d_gen_o) + len(d_gen_c))})
+
+plot = sns.barplot(x="Vocabulary", y = "Familiarity difference", hue="Context word", data=df2, ci=68, capsize=0.1)
+plot.set(ylim=(0.00025, 0.00035))
+plot.set_xlabel("Mismatch", fontsize=15)
+plot.set_ylabel("Familiarity difference", fontsize=15)
+
+
+print("Number")
+print(ttest_rel(d_num_c, d_num_o))
+print("Gender")
+print(ttest_rel(d_gen_c, d_gen_o))

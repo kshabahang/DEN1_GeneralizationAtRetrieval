@@ -132,12 +132,15 @@ for i in range(len(ug_ws1)):
 
 sns.set(font_scale=1.5)
 sns.set_palette("viridis_r")
-vlens = np.hstack([youknow_vlens[:, 0], yourknow_vlens[:, 0]])
-iteration = list(range(len(youknow_vlens))) + list(range(len(yourknow_vlens)))
-probe = ["you know"]*len(youknow_vlens) + ["your know"]*len(yourknow_vlens)
+K = 11
+vlens = np.hstack([youknow_vlens[:K, 0], yourknow_vlens[:K, 0]])
+iteration = list(range(K)) + list(range(K))
+probe = ["you know"]*K + ["your know"]*K
 df = pd.DataFrame({"Familiarity": vlens, "Probe":probe, "Iteration":iteration})
 
 plot = sns.relplot(data = df, x='Iteration', y='Familiarity', hue= "Probe", style="Probe", kind="line", linewidth=5)
+
+plot.set(xticks=range(0,K))
 
 plt.show()
 
