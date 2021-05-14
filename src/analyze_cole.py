@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
+from scipy.stats import ttest_rel
+
 
 f = open("../rsc/cole_intact.pkl", "rb")
 cole = pickle.load(f)
@@ -70,7 +72,7 @@ sns.set_palette("vlag")
 d_open = np.hstack([d_num_o, d_gen_o])
 d_close =np.hstack([d_num_c, d_gen_c])
 
-df = pd.DataFrame({"Familiarity difference": np.hstack([d_close, d_open]), "Context word": ['Close']*len(d_close) + ['Open']*len(d_open) })
+df = pd.DataFrame({"Familiarity difference": np.hstack([d_close, d_open]), "Context word": ['Closed']*len(d_close) + ['Open']*len(d_open) })
 
 plot = sns.barplot(x="Context word", y="Familiarity difference", data=df, ci=68, capsize=0.1)
 plot.set(ylim=(0.00025, 0.00032))
@@ -79,7 +81,7 @@ plot.set_ylabel("Familiarity difference", fontsize=15)
 
 
 df2 = pd.DataFrame({"Familiarity difference": np.hstack([d_num_o, d_num_c, d_gen_o, d_gen_c]), 
-                    "Context word": ['Open']*len(d_num_o) + ['Close']*len(d_num_c) + ['Open']*len(d_gen_o) + ['Close']*len(d_gen_c), 
+                    "Context word": ['Open']*len(d_num_o) + ['Closed']*len(d_num_c) + ['Open']*len(d_gen_o) + ['Closed']*len(d_gen_c), 
                     "Vocabulary": ['Number']*(len(d_num_o) + len(d_num_c)) + ['Gender']*(len(d_gen_o) + len(d_gen_c))})
 
 plot = sns.barplot(x="Vocabulary", y = "Familiarity difference", hue="Context word", data=df2, ci=68, capsize=0.1)
