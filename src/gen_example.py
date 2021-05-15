@@ -33,8 +33,6 @@ if __name__ == "__main__":
 
     K = 2#2
 
-    comp_idx = int(sys.argv[1])
-
     
     hparams = {"bank_labels":["t-{}".format(i) for i in range(K)],
                "eps":1e-7, 
@@ -177,123 +175,170 @@ if __name__ == "__main__":
     
     toLesion = True
 
-    pairs = "VB_RBR_2_RBR_VB PPRS_NN_2_PPR_NN IN_VBG_2_IN_VBP NNS_VBP_2_NN_VBP NN_VBZ_2_NN_VBP DT_NN_2_NN_DT JJ_NN_2_NN_JJ NN_IN_2_IN_NN PPR_VBP_2_PPRS_VBP".split()#[1:]
 
-    runSet = sys.argv[2] == "bgs"
+    #target = "buffalo"
 
-    if runSet: 
+    #bg_corr = "her " + target
+    #bg_incorr= "she " + target
 
-        grammatical = "VB_RBR PPRS_NN IN_VBG NNS_VBP NN_VBZ DT_NN JJ_NN NN_IN PPR_VBP".split()
-        ungrammatical="RBR_VB PPR_NN IN_VBP NN_VBP NN_VBP NN_DT NN_JJ IN_NN PPRS_VBP".split()
-
-
-
-        pair_set = pairs[comp_idx]
-
-        print (pair_set)
-         
-
-        #f = open("../rsc/bigrams/" +grammatical[i] + ".txt", "r")
-        #probes_g = f.readlines()
-        #f.close()
-
-        #f = open("../rsc/bigrams/" +ungrammatical[i] + ".txt", "r")
-        #probes_ug = f.readlines()
-        #f.close()
-
-        f = open("../rsc/to_run_NOVELS"+ pair_set + ".txt", "r")
-        bgs = f.readlines()
-        f.close()
-
-        probes_g  = [] 
-        probes_ug = []
-        for l in range(len(bgs)):
-             [corrA, corrB, incorrA, incorrB] = bgs[l].split()
-             probes_g.append(corrA + " " + corrB)
-             probes_ug.append(incorrA + " " + incorrB)
+    #target = ""
+    #context=  "snake"
+    #                            
+    #bg_corr = "{}s ".format(context) + target
+    #bg_incorr= "{} ".format(context) + target
 
 
 
+    [corr1, corr2] = bg_corr.split()
 
-        scores = {"correct":{}, "incorrect":{}}
-        corr_lens = []
-        incorr_lens=[]
+    ANet - (corr1, corr2)
 
-        corr_lens1 = [] ##save the first length
-        incorr_lens1 = []
+    ANet.probe(bg_corr)
 
+    vlens_corr = np.array(ANet.vlens)[:, 0]
 
+    g1 = ANet.banks['t-0']
+    g2 = ANet.banks['t-1']
 
-        for k in range(len(bgs)):
-            #(frq, [correct, incorrect]) = pair_items[k]
-            frq = 0
-            correct = probes_g[k]
-            incorrect = probes_ug[k]
-
-
-            
-            print (frq, correct, incorrect)
-        
-            bank_lbls = ['t-0', 't-1']
-          
-        
-            labels = ["correct", "incorrect"]
-            probes = [correct, incorrect]
-
-            [w1_c, w2_c] = correct.split()
-            [w1_i, w2_i] = incorrect.split()
-
-            if w1_c in ANet.I and w2_c in ANet.I and w1_i in ANet.I and w2_i in ANet.I:                
-                if toLesion:
-                    ANet - (w1_c, w2_c)
-        
-                for i in range(len(probes)):
-                    probe = probes[i]
-        
-                    ANet.probe(probe)
-        
-                    terminal = ' '.join([ANet.banks[bank_lbls[j]][0][0] for j in range(len(bank_lbls))])
-                    #change = round(np.linalg.norm(ANet.frames[0] - ANet.frames[-1]), 3)
-                    cycles = ANet.count
-                    if i == 0:
-                        corr_lens.append(ANet.vlens[-1][0])
-                        corr_lens1.append(ANet.vlens[1][0])
-                    else:
-                        incorr_lens.append(ANet.vlens[-1][0])
-                        incorr_lens1.append(ANet.vlens[1][0])
-        
-                    if "vlens" not in scores[labels[i]]:
-                        scores[labels[i]]["vlens"] = [ANet.vlens[-1]]
-                        scores[labels[i]]["vlens1"] = [ANet.vlens[1]]
-                        #scores[labels[i]]["ncycles"] = [len(ANet.frames)]
-                        scores[labels[i]]["probe"] = [probe]
-                        scores[labels[i]]["freq"] = [frq]
-                    else:
-                        scores[labels[i]]["vlens"].append(ANet.vlens[-1])
-                        scores[labels[i]]["vlens1"].append(ANet.vlens[1])
-                        #scores[labels[i]]["ncycles"].append(len(ANet.frames))
-                        scores[labels[i]]["probe"].append(probe)                
-                        scores[labels[i]]["freq"].append(frq)
- 
-                if toLesion:
-                    ~ ANet #reset
+    Wg = np.zeros((20,20))
+    for i in range(20):
+        for j in range(20):
+            Wg[i, j] = ANet.W[ANet.I[g1[0][i]], ANet.V + ANet.I[g2[0][j]]]
 
 
-        if toLesion:
-            print( "Lesioned")
-        else:
-            print("Not lesioned")
+    ANet.probe(bg_incorr)
 
-        corr_lens = np.array(corr_lens)
-        incorr_lens = np.array(incorr_lens)
-        #print("Is symmetric: ", np.sum(np.abs((ANet.W - ANet.W.T).data)) == 0)
-        #ANet.print_eigenspectrum()
-        print("meanCorr meanIncorr stdCorr stdIncorr meanDiff stdDiff")
-        print(np.mean(corr_lens), np.mean(incorr_lens), np.std(corr_lens), np.std(incorr_lens), (corr_lens - incorr_lens).mean(), (corr_lens - incorr_lens).std(), (corr_lens - incorr_lens).mean()/(corr_lens - incorr_lens).std())
+    vlens_incorr= np.array(ANet.vlens)[:, 0]
 
-        f = open(root_mem_path + "/"+pair_set + "_{}.pkl".format(memory_path), "wb")
-        pickle.dump(scores, f)
-        f.close()
+    ug1 = ANet.banks['t-0']
+    ug2 = ANet.banks['t-1']
+
+    Wug = np.zeros((20,20))
+
+    Wug = np.zeros((20,20))
+    for i in range(20):
+        for j in range(20):
+            Wug[i, j] = ANet.W[ANet.I[ug1[0][i]], ANet.V + ANet.I[ug2[0][j]]]
+
+    ~ ANet
+
+    k = min([len(vlens_corr), len(vlens_incorr)])
+
+    print(vlens_corr[:k] - vlens_incorr[:k])
+
+    np.save("g1", g1)
+    np.save("g2", g2)
+    np.save("ug1", ug1)
+    np.save("ug2", ug2)
+    np.save("Wg", Wg)
+    np.save("Wug", Wug)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

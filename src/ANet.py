@@ -827,8 +827,9 @@ class AssociativeNet(Model):
         o = deepcopy(self.nullvec)
         if self.hparams["localist"]:
             for i in range(min(len(input_sentence), numSlots)):
-                w_i = input_sentence[iShiftS + i]
-                o[i*self.N+self.I[w_i]] += 1
+                if input_sentence[iShiftS + i] != "_":
+                    w_i = input_sentence[iShiftS + i]
+                    o[i*self.N+self.I[w_i]] += 1
         elif self.hparams["distributed"]:
             for i in range(min(len(input_sentence), numSlots)):
                 w_i = input_sentence[iShiftS + i]

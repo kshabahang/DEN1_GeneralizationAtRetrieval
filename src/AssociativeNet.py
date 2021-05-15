@@ -828,7 +828,8 @@ class AssociativeNet(Model):
         if self.hparams["localist"]:
             for i in range(min(len(input_sentence), numSlots)):
                 w_i = input_sentence[iShiftS + i]
-                o[i*self.N+self.I[w_i]] += 1
+                if w_i != "_":
+                    o[i*self.N+self.I[w_i]] += 1
         elif self.hparams["distributed"]:
             for i in range(min(len(input_sentence), numSlots)):
                 w_i = input_sentence[iShiftS + i]
