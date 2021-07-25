@@ -90,7 +90,7 @@ for node in G.nodes:
 
 
 fig = plt.figure()
-nx.draw(G, pos = pos,node_size=2500 , node_color=node_color, edge_color=color, with_labels=True, alpha=0.5, width=weight, cmap=plt.cm.bwr)
+nx.draw(G, pos = pos,node_size=2500 , node_color=node_color, edge_color=color, with_labels=True, alpha=0.5, width=weight, cmap=plt.cm.bwr_r)
 
 fig.show()
 
@@ -99,17 +99,17 @@ G = nx.DiGraph()
 for i in range(K):
     for j in range(i, K):
         if Wug[i, j] > 0:
-            G.add_edge(ug1[0][i], " " + ug2[0][j], weight=weight_scale*Wug[i,j], color='red')
+            G.add_edge(ug1[0][i], " " + ug2[0][j], weight=weight_scale*Wug[i,j], color='blue')
         elif Wug[i,j] == 0:
             G.add_edge(ug1[0][i], " " + ug2[0][j], weight=weight_scale*Wug[i,j], color='white')
         else:
-             G.add_edge(ug1[0][i], " " + ug2[0][j], weight=weight_scale*Wug[i,j], color='blue')
+             G.add_edge(ug1[0][i], " " + ug2[0][j], weight=weight_scale*Wug[i,j], color='red')
         if Wug[j, i] > 0:
-            G.add_edge(" " + ug2[0][j], ug1[0][i], weight=weight_scale*Wug[j,i], color='red')
+            G.add_edge(" " + ug2[0][j], ug1[0][i], weight=weight_scale*Wug[j,i], color='blue')
         elif Wug[j, i] == 0:
             G.add_edge(" " + ug2[0][j], ug1[0][i], weight=weight_scale*Wug[j,i], color='white')
         else:
-            G.add_edge(" " + ug2[0][j], ug1[0][i], weight=weight_scale*Wug[j,i], color='blue')
+            G.add_edge(" " + ug2[0][j], ug1[0][i], weight=weight_scale*Wug[j,i], color='red')
 
 
 
@@ -137,7 +137,7 @@ for node in G.nodes:
 
 
 fig = plt.figure()
-nx.draw(G, pos = pos,node_size=2500 , node_color=node_color, edge_color=color, with_labels=True, alpha=0.5, width=weight, cmap=plt.cm.bwr)
+nx.draw(G, pos = pos,node_size=2500 , node_color=node_color, edge_color=color, with_labels=True, alpha=0.5, width=weight, cmap=plt.cm.bwr_r)
 fig.show()
 
 
