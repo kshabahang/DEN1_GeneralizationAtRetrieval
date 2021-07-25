@@ -461,10 +461,13 @@ class AssociativeNet(Model):
         vlen = norm(x_new)
         vlens.append(vlen)
 
-        x_new.clip(min=-1, max=1, out=x_new) #saturation
+        theta = self.theta
+
+        x_new.clip(min=-theta, max=theta, out=x_new) #saturation
         diff = norm(x0 - x_new)
         count = 0
-        while(diff > self.eps and count < self.maxiter):
+        #while(diff > self.eps and count < self.maxiter):
+        while(set(self.echo_full) != {-theta, theta}):
             count += 1
             ###load buffer with new state
             x = 1*x_new
@@ -479,7 +482,7 @@ class AssociativeNet(Model):
             vlen = float(norm(x_new))
             vlens.append(vlen)
 
-            x_new.clip(min=-0.1, max=0.1, out=x_new) #saturation
+            x_new.clip(min=-theta, max=theta, out=x_new) #saturation
 
             diff =  float(norm(x - x_new))
       

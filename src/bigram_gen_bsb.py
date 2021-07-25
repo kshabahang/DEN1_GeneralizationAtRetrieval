@@ -137,7 +137,7 @@ if __name__ == "__main__":
     if ANet.hparams["gpu"]:
         ANet.nullvec = ANet.nullvec.cuda()
 
-    ANet.prune(min_wf = 50) #50 works
+    ANet.prune(min_wf = 100) #50 works
 
 
 
@@ -179,23 +179,34 @@ if __name__ == "__main__":
     #    for j in range(10):
     #        x_in = np.hstack([ANet.E[i], ANet.E[j]])
     #        W_new += ANet.W[i, j]*np.outer(x_in, x_in)
-    #    pbar.update(i+1)
+    
+#    pbar.update(i+1)
 
-    E = np.array(ANet.E)
-
-    W_new = np.zeros((ANet.N*ANet.K, ANet.N*ANet.K))
-    for p in range(ANet.K):
-        for q in range(p, ANet.K):
-            W_new[p*ANet.N:(p+1)*ANet.N, q*ANet.N:(q+1)*ANet.N] = E.T.dot(ANet.W[p*ANet.V:(p+1)*ANet.V, q*ANet.V:(q+1)*ANet.V]).dot(E) 
-
-    ANet.W = W_new
-    #ANet.update_eig()
+    N = 1*ANet.N
+    ANet.N = ANet.V
     ANet.norm_eig(verbos=True, eps=1e-5)
-    ANet.W /= ANet.ei
+    ANet.W /= ANet.ei 
     ev = ANet.ev[:, 0]
     eta = 0.55
     for i in range(ANet.N*ANet.K):
         ANet.W[i, :] -= eta*ev[i]*ev
+
+    ANet.N = 1*N
+    E = np.array(ANet.E).T
+
+    W_new = np.zeros((ANet.N*ANet.K, ANet.N*ANet.K))
+    for p in range(ANet.K):
+        for q in range(p, ANet.K):
+            W_new[p*ANet.N:(p+1)*ANet.N, q*ANet.N:(q+1)*ANet.N] = E.dot(ANet.W[p*ANet.V:(p+1)*ANet.V, q*ANet.V:(q+1)*ANet.V]).dot(E.T) 
+
+    ANet.W = W_new
+    #ANet.update_eig()
+    ANet.theta = 0.01
+
+
+
+
+
 
     
     toLesion = False
