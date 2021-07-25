@@ -368,6 +368,30 @@ class AssociativeNet(Model):
             print(e1_sign, e2_sign, round(ei, 4), " ".join(ws1) + " | " + " ".join(ws2))
 
 
+    def norm_eig(self, eps=1e-12, verbos=False, maxiter=1000000):
+        self.ev = np.zeros((self.N*self.K, 1))
+        self.ei = 0
+        x0 = np.random.normal(0, 1/np.sqrt(self.N*self.K), self.N*self.K)
+
+        x1 = x0.dot(self.W)
+        norm = np.linalg.norm(x1)
+        x1 /= norm
+        count = 0
+        while(np.linalg.norm(x0 - x1) > eps and count < maxiter):
+            if verbos:
+                print(np.linalg.norm(x0 - x1))
+                print(sum(np.sign(x0)), sum(np.sign(x1)))
+            count += 1
+            x0 = 1*x1
+            x1 = x0.dot(self.W)
+            norm = np.linalg.norm(x1)
+            x1 /= norm
+        
+        self.ev[:, 0] = x1
+        self.ei = norm
+        #self.W /= norm
+
+
 
     def save_nonzero(self):
         self.E_nnz = lil_matrix(self.E).rows
@@ -432,7 +456,8 @@ class AssociativeNet(Model):
         ###compute the next state
         x0 = 1*self.echo_full
         x = 1*self.echo_full
-        x_new = self.MatMul(x, 0*x0)
+        #x_new = self.MatMul(x, 0*x0)
+        x_new = x.dot(self.W) + x0 
         vlen = norm(x_new)
         vlens.append(vlen)
 
@@ -450,11 +475,11 @@ class AssociativeNet(Model):
             frames.append(deepcopy(self.strengths))
 
             ###compute the next state
-            x_new = self.MatMul(x, 0*x)#self.echo_full.dot(self.W)#self.MatMul(self.echo_full, x0) 
+            x_new = x.dot(self.W) + x0#self.MatMul(x, 0*x)#self.echo_full.dot(self.W)#self.MatMul(self.echo_full, x0) 
             vlen = float(norm(x_new))
             vlens.append(vlen)
 
-            x_new.clip(min=-1, max=1, out=x_new) #saturation
+            x_new.clip(min=-0.1, max=0.1, out=x_new) #saturation
 
             diff =  float(norm(x - x_new))
       

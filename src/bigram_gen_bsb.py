@@ -1,5 +1,5 @@
 import sys, os
-from AssociativeNet import *
+from ANet import *
 #from matplotlib import pyplot as plt
 #plt.ion()
 from progressbar import ProgressBar
@@ -137,7 +137,7 @@ if __name__ == "__main__":
     if ANet.hparams["gpu"]:
         ANet.nullvec = ANet.nullvec.cuda()
 
-    ANet.prune(min_wf = 100) #50 works
+    ANet.prune(min_wf = 50) #50 works
 
 
 
@@ -145,7 +145,11 @@ if __name__ == "__main__":
         print("Constructing e-vecs")
         obv = OBVGen(14)
         #ANet.E = list(np.load(root_mem_path + "/{}/E{}.npy".format(memory_path, N)))
-        ANet.E = obv.E[:ANet.V]
+
+        ANet.E = obv.E[:ANet.V]#/np.linalg.norm(obv.E[:ANet.V])
+
+    ANet.nullvec = np.zeros(ANet.N*ANet.K)
+
 
 
 
@@ -162,27 +166,39 @@ if __name__ == "__main__":
         ANet.compute_weights(binaryMat=False)
         #print("Saving weight matrix")
         #np.save(root_mem_path + "/{}/pmi".format(memory_path), ANet.W )
-        ANet.update_eig()
+#        ANet.update_eig()
         #print("Saving eigenspectrum")
         #np.save(root_mem_path + "/{}/ei_pmi".format(memory_path), ANet.ei )
         #np.save(root_mem_path + "/{}/ev_pmi".format(memory_path), ANet.ev )
 
 
 
-    pbar = ProgressBar(maxval=10).start()
-    W_new = np.zeros((2*ANet.E[0].shape[0],2*ANet.E[0].shape[0]))
-    for i in range(10):        
-        for j in range(10):
-            x_in = np.hstack([ANet.E[i], ANet.E[j]])
-            W_new += ANet.W[i, j]*np.outer(x_in, x_in)
-        pbar.update(i+1)
+    #pbar = ProgressBar(maxval=10).start()
+    #W_new = np.zeros((2*ANet.E[0].shape[0],2*ANet.E[0].shape[0]))
+    #for i in range(10):        
+    #    for j in range(10):
+    #        x_in = np.hstack([ANet.E[i], ANet.E[j]])
+    #        W_new += ANet.W[i, j]*np.outer(x_in, x_in)
+    #    pbar.update(i+1)
 
+    E = np.array(ANet.E)
 
+    W_new = np.zeros((ANet.N*ANet.K, ANet.N*ANet.K))
+    for p in range(ANet.K):
+        for q in range(p, ANet.K):
+            W_new[p*ANet.N:(p+1)*ANet.N, q*ANet.N:(q+1)*ANet.N] = E.T.dot(ANet.W[p*ANet.V:(p+1)*ANet.V, q*ANet.V:(q+1)*ANet.V]).dot(E) 
 
-
+    ANet.W = W_new
+    #ANet.update_eig()
+    ANet.norm_eig(verbos=True, eps=1e-5)
+    ANet.W /= ANet.ei
+    ev = ANet.ev[:, 0]
+    eta = 0.55
+    for i in range(ANet.N*ANet.K):
+        ANet.W[i, :] -= eta*ev[i]*ev
 
     
-    toLesion = True
+    toLesion = False
 
     pairs = "VB_RBR_2_RBR_VB PPRS_NN_2_PPR_NN IN_VBG_2_IN_VBP NNS_VBP_2_NN_VBP NN_VBZ_2_NN_VBP DT_NN_2_NN_DT JJ_NN_2_NN_JJ NN_IN_2_IN_NN PPR_VBP_2_PPRS_VBP".split()#[1:]
 
@@ -263,11 +279,11 @@ if __name__ == "__main__":
                     #change = round(np.linalg.norm(ANet.frames[0] - ANet.frames[-1]), 3)
                     cycles = ANet.count
                     if i == 0:
-                        corr_lens.append(ANet.vlens[-1][0])
-                        corr_lens1.append(ANet.vlens[1][0])
+                        corr_lens.append(ANet.vlens[-1])
+                        corr_lens1.append(ANet.vlens[1])
                     else:
-                        incorr_lens.append(ANet.vlens[-1][0])
-                        incorr_lens1.append(ANet.vlens[1][0])
+                        incorr_lens.append(ANet.vlens[-1])
+                        incorr_lens1.append(ANet.vlens[1])
 
                     if "vlens" not in scores[labels[i]]:
                         scores[labels[i]]["vlens"] = [ANet.vlens[-1]]
