@@ -67,11 +67,11 @@ if __name__ == "__main__":
                "numSlots":K,
                "C":1,
                "mode":"numpy",
-               "feedback":"saturate",
+               "feedback":"persist",
                "init_weights":False,
                "gpu":False,
-               "localist":False,
-               "distributed":True,
+               "localist":True,
+               "distributed":False,
                "maxiter":1000,
                "explicit":True,
                "sparse":False,
@@ -137,7 +137,7 @@ if __name__ == "__main__":
     if ANet.hparams["gpu"]:
         ANet.nullvec = ANet.nullvec.cuda()
 
-    ANet.prune(min_wf = 100) #50 works
+    ANet.prune(min_wf = 50) #50 works
 
 
 
@@ -148,7 +148,7 @@ if __name__ == "__main__":
 
         ANet.E = obv.E[:ANet.V]#/np.linalg.norm(obv.E[:ANet.V])
 
-    ANet.nullvec = np.zeros(ANet.N*ANet.K)
+    ANet.nullvec = np.zeros(ANet.V*ANet.K)
 
 
 
@@ -184,24 +184,26 @@ if __name__ == "__main__":
 
     #N = 1*ANet.N
     #ANet.N = ANet.V
-    #ANet.norm_eig(verbos=True, eps=1e-5)
-    #ANet.W /= (ANet.ei - 1)
-    #ev = ANet.ev[:, 0]
-    #eta = 0.55
-    #for i in range(ANet.N*ANet.K):
-    #    ANet.W[i, :] -= eta*ev[i]*ev
-    #
+    ANet.norm_eig(verbos=True, eps=1e-5)
+    ANet.W /= (ANet.ei - 1)
+    ev = ANet.ev[:, 0]
+    eta = 0.55
+    for i in range(ANet.V*ANet.K):
+        ANet.W[i, :] -= eta*ev[i]*ev
+
+    ANet.N = ANet.V
+    
     #ANet.N = 1*N
-    E = np.array(ANet.E).T
+    #E = np.array(ANet.E).T
 
-    W_new = np.zeros((ANet.N*ANet.K, ANet.N*ANet.K))
-    for p in range(ANet.K):
-        for q in range(p, ANet.K):
-            W_new[p*ANet.N:(p+1)*ANet.N, q*ANet.N:(q+1)*ANet.N] = E.dot(ANet.W[p*ANet.V:(p+1)*ANet.V, q*ANet.V:(q+1)*ANet.V]).dot(E.T) 
+    #W_new = np.zeros((ANet.N*ANet.K, ANet.N*ANet.K))
+    #for p in range(ANet.K):
+    #    for q in range(p, ANet.K):
+    #        W_new[p*ANet.N:(p+1)*ANet.N, q*ANet.N:(q+1)*ANet.N] = E.dot(ANet.W[p*ANet.V:(p+1)*ANet.V, q*ANet.V:(q+1)*ANet.V]).dot(E.T) 
 
-    ANet.W = W_new
-    #ANet.update_eig()
-    ANet.theta = 0.01
+    #ANet.W = W_new
+    ##ANet.update_eig()
+    #ANet.theta = 0.01
 
 
     
@@ -335,7 +337,7 @@ if __name__ == "__main__":
         print("meanCorr meanIncorr stdCorr stdIncorr meanDiff stdDiff")
         print(np.mean(corr_lens), np.mean(incorr_lens), np.std(corr_lens), np.std(incorr_lens), (corr_lens - incorr_lens).mean(), (corr_lens - incorr_lens).std(), (corr_lens - incorr_lens).mean()/(corr_lens - incorr_lens).std())
 
-        f = open(root_mem_path + "/"+pair_set + "_{}_bsb.pkl".format(memory_path), "wb")
+        f = open(root_mem_path + "/"+pair_set + "_{}_pers.pkl".format(memory_path), "wb")
         pickle.dump(scores, f)
         f.close()
 

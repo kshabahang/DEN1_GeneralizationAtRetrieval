@@ -55,7 +55,7 @@ class AssociativeNet(Model):
             else:
                 self.feedback = self.feedback_stp_dense
         elif hparams["feedback"] == "persist":
-            self.feedback = self.feedback_persist_dense
+            self.feedback = self.feedback_pers
         self.E = [] #environment vectors for dealing with {-1,1} vectors
 
 
@@ -369,9 +369,9 @@ class AssociativeNet(Model):
 
 
     def norm_eig(self, eps=1e-12, verbos=False, maxiter=1000000):
-        self.ev = np.zeros((self.N*self.K, 1))
+        self.ev = np.zeros((self.V*self.K, 1))
         self.ei = 0
-        x0 = np.random.normal(0, 1/np.sqrt(self.N*self.K), self.N*self.K)
+        x0 = np.random.normal(0, 1/np.sqrt(self.V*self.K), self.V*self.K)
 
         x1 = x0.dot(self.W)
         norm = np.linalg.norm(x1)
@@ -457,7 +457,7 @@ class AssociativeNet(Model):
         x0 = 1*self.echo_full
         x = 1*self.echo_full
         #x_new = self.MatMul(x, 0*x0)
-        x_new = x.dot(self.W) + x0 
+        x_new = x.dot(self.W) + self.alpha*x0 
         vlen = norm(x_new)
         vlens.append(vlen)
 
@@ -478,7 +478,7 @@ class AssociativeNet(Model):
             frames.append(deepcopy(self.strengths))
 
             ###compute the next state
-            x_new = x.dot(self.W) + x0#self.MatMul(x, 0*x)#self.echo_full.dot(self.W)#self.MatMul(self.echo_full, x0) 
+            x_new = x.dot(self.W) + self.alpha*x0#self.MatMul(x, 0*x)#self.echo_full.dot(self.W)#self.MatMul(self.echo_full, x0) 
             vlen = float(norm(x_new))
             vlens.append(vlen)
 
@@ -501,6 +501,69 @@ class AssociativeNet(Model):
         self.frames = frames
         self.vlens  = vlens
         self.count = count
+
+    def feedback_pers(self):
+        ''''''
+        ###compute strengths for the initial input pattern in buffer
+        self.compute_sts()
+        self.sort_banks()
+
+        self.view_banks(5)
+        frames=  [deepcopy(self.strengths)]
+
+        vlens = [norm(self.echo_full)]
+
+        ###compute the next state
+        x0 = 1*self.echo_full
+        x = 1*self.echo_full
+        #x_new = self.MatMul(x, 0*x0)
+        
+        x_new = x.dot(self.W) + self.alpha*x0 
+        vlen = norm(x_new)
+        vlens.append(vlen)
+        x_new /= vlen
+
+        #x_new.clip(min=-theta, max=theta, out=x_new) #saturation
+        diff = norm(x0 - x_new)
+        count = 0
+        while(diff > self.eps and count < self.maxiter):
+        #while(set(self.echo_full) != {-theta, theta}):
+            count += 1
+            ###load buffer with new state
+            x = 1*x_new
+            self.echo_full = 1*x_new
+            self.compute_sts() #compute strengths with updated buffer
+            self.sort_banks()
+            self.view_banks(5)
+            frames.append(deepcopy(self.strengths))
+
+            ###compute the next state
+            x_new = x.dot(self.W) + self.alpha*x0#self.MatMul(x, 0*x)#self.echo_full.dot(self.W)#self.MatMul(self.echo_full, x0) 
+            vlen = float(norm(x_new))
+            vlens.append(vlen)
+            x_new /= vlen
+
+            #x_new.clip(min=-theta, max=theta, out=x_new) #saturation
+
+            diff =  float(norm(x - x_new))
+      
+
+
+        self.echo_full = 1*x_new
+
+        
+
+
+
+        self.compute_sts() #compute strengths with updated buffer
+        self.sort_banks()
+        frames.append(deepcopy(self.strengths))
+
+        self.frames = frames
+        self.vlens  = vlens
+        self.count = count
+
+
 
 
     def feedback_lin(self):
@@ -872,8 +935,10 @@ class AssociativeNet(Model):
     def probe(self, sentence, st = 1.0, toNorm = True, noise = 0, verbose=False):
         X_order = self.sent2vec(sentence.split())
         X_order = st*X_order + np.random.normal(0, noise, self.N*self.K)
-        if toNorm:
+        
+        if toNorm:       
             X_order = X_order/norm(X_order)
+ 
 
         report = self.report(X_order)
         return report
