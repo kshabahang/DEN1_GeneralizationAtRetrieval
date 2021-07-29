@@ -22,7 +22,7 @@ vectors = [[1,1,-1,-1], [-1,1,-1,1], [1,1,1,1], [1,-1,-1,1]]
 wvecs = {"the":[1,1,1,1], "cat":[-1,1,-1,1], "a":[1,-1,-1,1], "dog":[1,1,-1,-1]}
 vocab = ['the','cat', 'a', 'dog']
 
-NIterProbe = 1
+NIterProbe = 1000
 NIterEncode=1
 
 
@@ -132,11 +132,13 @@ for m in range(NIterEncode):
                 probe /= np.linalg.norm(probe)
         
                 x1 = 1*probe
-                x2 = x1.dot(W).clip(min=-1, max=1)
+                x2 = (x1.dot(W) + probe)#.clip(min=-1, max=1)
+                x2 /= np.linalg.norm(x2)
                 k = 1
                 while(np.linalg.norm(x1 - x2) > 1e-7):
                     x1 = 1*x2
-                    x2 = x1.dot(W).clip(min=-1, max=1)
+                    x2 = (x1.dot(W) + probe)#.clip(min=-1, max=1)
+                    x2 /= np.linalg.norm(x2)
                     k += 1
                 
                 

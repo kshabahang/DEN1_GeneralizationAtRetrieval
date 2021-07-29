@@ -6,6 +6,8 @@ import seaborn as sns
 import pandas as pd
 from plot_tools import heatmap, annotate_heatmap
 from matplotlib import colors
+from scipy.stats import ttest_rel
+
 
 pairs = "VB_RBR_2_RBR_VB PPRS_NN_2_PPR_NN IN_VBG_2_IN_VBP NNS_VBP_2_NN_VBP NN_VBZ_2_NN_VBP DT_NN_2_NN_DT JJ_NN_2_NN_JJ NN_IN_2_IN_NN PPR_VBP_2_PPRS_VBP".split()
 
@@ -23,14 +25,30 @@ ungrammatical={}
 discrims = []
 ug_types = []
 g_types = []
-bad_examples = {}
-good_examples={}
+
+
+models = ["pLAN", "DEN", "pSat"]
+d_by_model = {models[i]:{} for i in range(len(models))}
 ds = []
+cond = "lesioned"
+#models = models[1:]
 for i in range(len(pairs)):
     idx = isort[i]
-    try:
-        f = open("../rsc/partialInhibition_linpers_intact/{}_{}.pkl".format(pairs[idx], corpus + "_pers"), "rb")
-        #f = open("../rsc/partialInhibition_intact/{}_{}.pkl".format(pairs[idx], corpus), "rb")
+    if cond == "lesioned":
+        #
+        fnames = ["../rsc/partialInhibition_linpers_{}/{}_{}_{}.pkl".format(cond, pairs[idx], corpus , cond + "_pers"),
+                  "../rsc/partialInhibition_{}/{}_{}.pkl".format(cond, pairs[idx], corpus), 
+                  "../rsc/PersSat_{}/{}_{}_{}_sat.pkl".format(cond, pairs[idx], corpus, cond)]
+
+    else:
+        fnames = ["../rsc/partialInhibition_linpers_{}/{}_{}.pkl".format(cond, pairs[idx], corpus + "_pers"),
+                  "../rsc/partialInhibition_{}/{}_{}.pkl".format(cond, pairs[idx], corpus), 
+                  "../rsc/PersSat_{}/{}_{}_{}_sat.pkl".format(cond, pairs[idx], corpus, cond)]
+    #fnames = fnames[1:]
+
+    for j in range(len(fnames)):
+        f = open(fnames[j], "rb")
+    
         bgs = pickle.load(f)
         f.close()
 
@@ -52,33 +70,39 @@ for i in range(len(pairs)):
         incorr_lbl = p1 + "-" + p2
         pos_lbl = corr_lbl + " vs " + incorr_lbl
 
-        pairs_fixed.append(pos_lbl)
+        if j == 0:
+            pairs_fixed.append(pos_lbl)
 
-        correct = np.array(bgs["correct"]["vlens"])#[:, 0]
-        incorrect = np.array(bgs["incorrect"]["vlens"])#[:, 0]
+        if "linpers" not in fnames[j] and "bsb" not in fnames[j] and "sat" not in fnames[j]:
+            correct = np.array(bgs["correct"]["vlens"])[:, 0]
+            incorrect = np.array(bgs["incorrect"]["vlens"])[:, 0]
+        else:
+            correct = np.array(bgs["correct"]["vlens"])
+            incorrect = np.array(bgs["incorrect"]["vlens"])
         #[bg_corr, bg_icorr] = pairs[idx].split('_2_')
         g_types.append(corr_lbl)
         ug_types.append(incorr_lbl)
         grammatical[corr_lbl] = correct
         ungrammatical[incorr_lbl] = incorrect
         d = correct - incorrect
-        bad_idx = np.argmin(d)
-        good_idx=np.argmax(d)
-        bad_examples[pairs[idx]] = (bgs["correct"]['probe'][bad_idx], bgs["incorrect"]['probe'][bad_idx], d[bad_idx])
-        good_examples[pairs[idx]] = (bgs["correct"]['probe'][good_idx], bgs["incorrect"]['probe'][good_idx], d[good_idx])
+        d_by_model[models[j]][pos_lbl] = d
+
         scores[pos_lbl] = d
         probes[pos_lbl] = list(zip( bgs["correct"]['probe'], bgs["incorrect"]['probe']))
         discrims.append(np.mean(d)/np.std(d))
 
-
+        print()
+        print(models[j])    
         print(pos_lbl, len(d),np.mean(d)/np.std(d), (correct - incorrect).mean(), (correct - incorrect).std(), correct.mean(), incorrect.mean())
-        ds.append(np.mean(d)/np.std(d))
-    except Exception as e:
-        print(e)
-        continue
+    ds.append(np.mean(d)/np.std(d))
 
 
+for i in range(len(pairs_fixed)):
+    print(pairs_fixed[i], round(sum(d_by_model['pSat'][pairs_fixed[i]] > 0)/len(d_by_model['pSat'][pairs_fixed[i]]), 2))
 
+print()
+for i in range(len(pairs_fixed)):
+    print(pairs_fixed[i], np.mean(d_by_model['pSat'][pairs_fixed[i]])/np.std(d_by_model['pSat'][pairs_fixed[i]]))
 
 #plotDists = True
 #if plotDists:
@@ -94,16 +118,22 @@ for i in range(len(pairs)):
 #            subplots[i][j].axes.get_yaxis().set_visible(False)
 #            subplots[i][j].axes.get_xaxis().set_visible(False)
 
-
+models= ["DEN", "pSat"]#"pLAN", "pSat"]
 fig, axarr = plt.subplots(nrows =3,ncols=3)
 for i in range(3):
     for j in range(3):
         pair = pairs_fixed[i*3 + j]
-        axarr[i,j].hist(scores[pair], alpha = 0.5, label=pair)
         axarr[i,j].set_title(pair)
         axarr[i,j].axvline(0, color='red')
         axarr[i,j].axes.get_yaxis().set_visible(False)
         axarr[i,j].axes.get_xaxis().set_visible(False)
+        print(pair, ttest_rel(d_by_model[models[0]][pair], d_by_model[models[1]][pair]))
+        for k in range(len(models)):
+            axarr[i,j].hist(d_by_model[models[k]][pair], alpha = 0.5, label=models[k])
+        if i == j == 0:
+            axarr[i,j].legend()
+
+
 fig.show()
 #
 #
