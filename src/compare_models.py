@@ -12,7 +12,19 @@ from scipy.stats import ttest_rel
 pairs = "VB_RBR_2_RBR_VB PPRS_NN_2_PPR_NN IN_VBG_2_IN_VBP NNS_VBP_2_NN_VBP NN_VBZ_2_NN_VBP DT_NN_2_NN_DT JJ_NN_2_NN_JJ NN_IN_2_IN_NN PPR_VBP_2_PPRS_VBP".split()
 
 
-remap_pos_lbls = {"PPR":"PRP", "PPRS":"PRP$"}
+#remap_pos_lbls = {"PPR":"PRP", "PPRS":"PRP$"}
+remap_pos_lbls = {"DT":"DET",
+"NN":"NOUN",
+"PPR":"PRON",
+"VBP":"VERB(pres)",
+"JJ":"ADJ",
+"PPRS":"POSS",
+"VBG":"VERB(ing)",
+"NNS":"NOUN(s)",
+"RBR":"ADV(comp)",
+"VBZ":"VERB(sing/3rd)",
+"IN":"PREP",
+"VB":"VERB"}
 
 
 pairs_fixed= []
@@ -20,8 +32,8 @@ isort = np.array([7, 4, 0, 3, 1, 2, 6, 8, 5])[::-1]
 corpus = sys.argv[1]
 scores= {}
 probes = {}
-grammatical = {}
-ungrammatical={}
+#grammatical = {}
+#ungrammatical={}
 discrims = []
 ug_types = []
 g_types = []
@@ -29,8 +41,10 @@ g_types = []
 
 models = ["pLAN", "DEN", "pSat"]
 d_by_model = {models[i]:{} for i in range(len(models))}
+grammatical = {models[i]:{} for i in range(len(models))}
+ungrammatical = {models[i]:{} for i in range(len(models))}
 ds = []
-cond = "lesioned"
+cond = "intact"
 #models = models[1:]
 for i in range(len(pairs)):
     idx = isort[i]
@@ -72,6 +86,10 @@ for i in range(len(pairs)):
 
         if j == 0:
             pairs_fixed.append(pos_lbl)
+            g_types.append(corr_lbl)
+            ug_types.append(incorr_lbl)
+
+
 
         if "linpers" not in fnames[j] and "bsb" not in fnames[j] and "sat" not in fnames[j]:
             correct = np.array(bgs["correct"]["vlens"])[:, 0]
@@ -80,10 +98,10 @@ for i in range(len(pairs)):
             correct = np.array(bgs["correct"]["vlens"])
             incorrect = np.array(bgs["incorrect"]["vlens"])
         #[bg_corr, bg_icorr] = pairs[idx].split('_2_')
-        g_types.append(corr_lbl)
-        ug_types.append(incorr_lbl)
-        grammatical[corr_lbl] = correct
-        ungrammatical[incorr_lbl] = incorrect
+        
+        
+        grammatical[models[j]][corr_lbl] = correct
+        ungrammatical[models[j]][incorr_lbl] = incorrect
         d = correct - incorrect
         d_by_model[models[j]][pos_lbl] = d
 
@@ -118,7 +136,7 @@ for i in range(len(pairs_fixed)):
 #            subplots[i][j].axes.get_yaxis().set_visible(False)
 #            subplots[i][j].axes.get_xaxis().set_visible(False)
 
-models= ["DEN", "pSat"]#"pLAN", "pSat"]
+#models= ["DEN", "pSat"]#"pLAN", "pSat"]
 fig, axarr = plt.subplots(nrows =3,ncols=3)
 for i in range(3):
     for j in range(3):
@@ -146,32 +164,36 @@ fig.show()
 #f.close()
 
 distDiff = []
-muDiff = np.zeros((9,9))
-stdDiff = np.zeros((9,9))
-P = np.zeros((9,9))
-k = 0
-for bg_g in g_types:
-    l = 0
-    for bg_ug in ug_types:
-        fam_g  = grammatical[bg_g] 
-        fam_ug = ungrammatical[bg_ug]
-        diffs = []
-        for i in range(len(fam_g)):
-            for j in range(len(fam_ug)):
-                diffs.append(fam_g[i] - fam_ug[j])
-        muDiff[k, l] = np.mean(diffs)
-        stdDiff[k, l] = np.std(diffs)
-        P[k, l] = sum(np.array(diffs) > 0)/len(diffs)
-        distDiff += diffs
-        l += 1
-    k += 1
+n_models = len(models)
+muDiff = np.zeros((9,9, n_models))
+stdDiff = np.zeros((9,9, n_models))
+P = np.zeros((9,9, n_models))
+for m in range(n_models):
+    k = 0
+    for bg_g in g_types:
+        l = 0
+        for bg_ug in ug_types:
+            fam_g  = grammatical[models[m]][bg_g] 
+            fam_ug = ungrammatical[models[m]][bg_ug]
+            diffs = []
+            for i in range(len(fam_g)):
+                for j in range(len(fam_ug)):
+                    diffs.append(fam_g[i] - fam_ug[j])
+            muDiff[k, l, m] = np.mean(diffs)
+            stdDiff[k, l, m] = np.std(diffs)
+            P[k, l, m] = sum(np.array(diffs) > 0)/len(diffs)
+            distDiff += diffs
+            l += 1
+        k += 1
         
-D = muDiff / (stdDiff + 1e-32)
-fig = plt.figure()
-(im, cbar) = heatmap(D, list(map(lambda x : '-'.join(x.replace('2', 'to').split('_')) , g_types)), 
-                        list(map(lambda x : '-'.join(x.replace('2', 'to').split('_')) , ug_types)), cmap = "PRGn", cbarlabel="Discriminability")
-annotate_heatmap(im, D)
-fig.show()
+    D = muDiff[:, :, m] / (stdDiff[:, :, m] + 1e-32)
+    fig = plt.figure()
+    (im, cbar) = heatmap(D, list(map(lambda x : '-'.join(x.replace('2', 'to').split('_')) , g_types)), 
+                            list(map(lambda x : '-'.join(x.replace('2', 'to').split('_')) , ug_types)), cmap = "PRGn", cbarlabel="Discriminability")
+    annotate_heatmap(im, D)
+    plt.title(models[m])
+    fig.savefig(models[m] + "heatmap_{}".format(cond))
+    #fig.show()
 
 
 
