@@ -153,17 +153,17 @@ if __name__ == "__main__":
 
 
 
-    #toLoad = False
-    #if toLoad:
-    #    print("Loading weight matrix")
-    #    ANet.W = np.load(root_mem_path + "/{}/pmi.npy".format(memory_path))
-    #    print("Loading eigenspectrum")
-    #    ANet.ei = np.load(root_mem_path + "/{}/ei_pmi.npy".format(memory_path))
-    #    ANet.ev = np.load(root_mem_path + "/{}/ev_pmi.npy".format(memory_path))
-    #    ANet.W /= ANet.ei[0]
-    #else:
-    #    print("Crunching out the weights...")
-    #    ANet.compute_weights(binaryMat=False)
+    toLoad = False
+    if toLoad:
+        print("Loading weight matrix")
+        ANet.W = np.load(root_mem_path + "/{}/pmi.npy".format(memory_path))
+        print("Loading eigenspectrum")
+        ANet.ei = np.load(root_mem_path + "/{}/ei_pmi.npy".format(memory_path))
+        ANet.ev = np.load(root_mem_path + "/{}/ev_pmi.npy".format(memory_path))
+        ANet.W /= ANet.ei[0]
+    else:
+        print("Crunching out the weights...")
+        ANet.compute_weights(binaryMat=False)
         #print("Saving weight matrix")
         #np.save(root_mem_path + "/{}/pmi".format(memory_path), ANet.W )
 #        ANet.update_eig()
@@ -184,11 +184,11 @@ if __name__ == "__main__":
 
     #N = 1*ANet.N
     #ANet.N = ANet.V
-    ANet.W = np.array(ANet.COUNTS.todense()).astype(float)
+    #ANet.W = np.array(ANet.COUNTS.todense()).astype(float)
     ANet.norm_eig(verbos=True, eps=1e-5)
     ANet.W /= (ANet.ei - 1)
     ev = ANet.ev[:, 0]
-    eta = 1
+    eta = 0.55
     for i in range(ANet.V*ANet.K):
         ANet.W[i, :] -= eta*ev[i]*ev
 
