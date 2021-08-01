@@ -189,10 +189,11 @@ for m in range(n_models):
     D = muDiff[:, :, m] / (stdDiff[:, :, m] + 1e-32)
     fig = plt.figure()
     (im, cbar) = heatmap(D, list(map(lambda x : '-'.join(x.replace('2', 'to').split('_')) , g_types)), 
-                            list(map(lambda x : '-'.join(x.replace('2', 'to').split('_')) , ug_types)), cmap = "PRGn", cbarlabel="Discriminability")
+                            list(map(lambda x : '-'.join(x.replace('2', 'to').split('_')) , ug_types)), vmin=-2, vmax=10, cmap = "PRGn", cbarlabel="Discriminability")
     annotate_heatmap(im, D)
     plt.title(models[m])
-    fig.savefig(models[m] + "heatmap_{}".format(cond))
+    plt.tight_layout()
+    fig.savefig(models[m] + "heatmap_{}.svg".format(cond), dpi=80)
     #fig.show()
 
 

@@ -25,7 +25,7 @@ class MidpointNormalize(matplotlib.colors.Normalize):
 
 
 
-def heatmap(data, row_labels, col_labels, ax=None,
+def heatmap(data, row_labels, col_labels, vmin, vmax, ax=None,
             cbar_kw={}, cbarlabel="", **kwargs):
     """
     Create a heatmap from a numpy array and two lists of labels.
@@ -52,8 +52,8 @@ def heatmap(data, row_labels, col_labels, ax=None,
     if not ax:
         ax = plt.gca()
 
-    vmin = data.min()
-    vmax = data.max()
+    #vmin = data.min()
+    #vmax = data.max()
     norm = MidpointNormalize(vmin=vmin, vmax=vmax, midpoint=0)
     # Plot the heatmap
     #im = ax.imshow(data, **kwargs)
@@ -144,8 +144,11 @@ def annotate_heatmap(im, data=None, valfmt="{x:.2f}",
         for j in range(data.shape[1]):
             if data[i, j] > 8: #TODO make this less cringe
                 kw.update(color="white")
+            elif data[i, j] < 0:
+                kw.update(color="red")
             else:
-                kw.update(color=textcolors[int(im.norm(data[i, j]) > threshold)])
+                kw.update(color="black")
+                #kw.update(color=textcolors[int(im.norm(data[i, j]) > threshold)])
             text = im.axes.text(j, i, valfmt(data[i, j], None), **kw)
             texts.append(text)
 

@@ -184,6 +184,7 @@ if __name__ == "__main__":
 
     #N = 1*ANet.N
     #ANet.N = ANet.V
+    #ANet.W = np.array(ANet.COUNTS.todense()).astype(float)
     ANet.norm_eig(verbos=True, eps=1e-5)
     ANet.W /= (ANet.ei - 1)
     ev = ANet.ev[:, 0]

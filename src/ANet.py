@@ -524,6 +524,7 @@ class AssociativeNet(Model):
         #x_new /= vlen
         x_new.clip(min=-self.theta, max=self.theta,out=x_new )
         
+        
         diff = norm(x0 - x_new)
         count = 0
         while(diff > self.eps and count < self.maxiter):
@@ -629,7 +630,7 @@ class AssociativeNet(Model):
             vlen1= float(norm(x_new[:self.V]))
             vlen2= float(norm(x_new[self.V:]))
             vlens.append((vlen, vlen1, vlen2))
-            #x_new = x_new/vlen
+            x_new = x_new/vlen
             diff = norm(x - x_new)
             count = 0
 
@@ -655,7 +656,7 @@ class AssociativeNet(Model):
                 vlens.append((vlen, vlen1, vlen2))
 
                 frames.append(deepcopy(x_new ))
-                #x_new = x_new/vlen
+                x_new = x_new/vlen
 
                 diff =  float(norm(x - x_new))
 
