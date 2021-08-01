@@ -44,7 +44,7 @@ d_by_model = {models[i]:{} for i in range(len(models))}
 grammatical = {models[i]:{} for i in range(len(models))}
 ungrammatical = {models[i]:{} for i in range(len(models))}
 ds = []
-cond = "intact"
+cond = "lesioned"
 #models = models[1:]
 for i in range(len(pairs)):
     idx = isort[i]
@@ -228,10 +228,10 @@ for i in range(len(pairs_fixed)):
     frqInfo[i, :] = np.array([g_fr, g1_fr, g2_fr, ug_fr, ug1_fr, ug2_fr])
 
 
-discrims = np.array(discrims)
-frqLbls = ['grammatical', 'grammatical1', 'grammatical2', 'ungrammatical', 'ungrammatical1', 'ungrammatical2']
-for i in range(len(frqLbls)):
-    print(frqLbls[i], np.corrcoef(discrims, frqInfo[:, i])[0][1])
+#discrims = np.array(discrims)
+#frqLbls = ['grammatical', 'grammatical1', 'grammatical2', 'ungrammatical', 'ungrammatical1', 'ungrammatical2']
+#for i in range(len(frqLbls)):
+#    print(frqLbls[i], np.corrcoef(discrims, frqInfo[:, i])[0][1])
 
 
 #fig = plt.figure()
