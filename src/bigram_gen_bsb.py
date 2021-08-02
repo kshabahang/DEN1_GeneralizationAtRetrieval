@@ -182,16 +182,16 @@ if __name__ == "__main__":
     
 #    pbar.update(i+1)
 
-    #N = 1*ANet.N
-    #ANet.N = ANet.V
-    #ANet.norm_eig(verbos=True, eps=1e-5)
-    #ANet.W /= (ANet.ei - 1)
-    #ev = ANet.ev[:, 0]
-    #eta = 0.55
-    #for i in range(ANet.N*ANet.K):
-    #    ANet.W[i, :] -= eta*ev[i]*ev
-    #
-    #ANet.N = 1*N
+    N = 1*ANet.N
+    ANet.N = ANet.V
+    ANet.norm_eig(verbos=True, eps=1e-5)
+    ANet.W /= ANet.ei
+    ev = ANet.ev[:, 0]
+    eta = 0.55
+    for i in range(ANet.N*ANet.K):
+        ANet.W[i, :] -= eta*ev[i]*ev
+    
+    ANet.N = 1*N
     E = np.array(ANet.E).T
 
     W_new = np.zeros((ANet.N*ANet.K, ANet.N*ANet.K))
@@ -201,7 +201,7 @@ if __name__ == "__main__":
 
     ANet.W = W_new
     #ANet.update_eig()
-    ANet.theta = 0.01
+    ANet.theta = 1
 
 
     
