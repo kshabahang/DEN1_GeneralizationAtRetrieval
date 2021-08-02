@@ -67,7 +67,7 @@ if __name__ == "__main__":
                "numSlots":K,
                "C":1,
                "mode":"numpy",
-               "feedback":"persist",
+               "feedback":"DENSat",
                "init_weights":False,
                "gpu":False,
                "localist":True,
@@ -222,7 +222,7 @@ if __name__ == "__main__":
 
 
     
-    toLesion = False
+    toLesion = True
 
     pairs = "VB_RBR_2_RBR_VB PPRS_NN_2_PPR_NN IN_VBG_2_IN_VBP NNS_VBP_2_NN_VBP NN_VBZ_2_NN_VBP DT_NN_2_NN_DT JJ_NN_2_NN_JJ NN_IN_2_IN_NN PPR_VBP_2_PPRS_VBP".split()#[1:]
 
@@ -338,7 +338,7 @@ if __name__ == "__main__":
         print("meanCorr meanIncorr stdCorr stdIncorr meanDiff stdDiff")
         print(np.mean(corr_lens), np.mean(incorr_lens), np.std(corr_lens), np.std(incorr_lens), (corr_lens - incorr_lens).mean(), (corr_lens - incorr_lens).std(), (corr_lens - incorr_lens).mean()/(corr_lens - incorr_lens).std())
 
-        f = open(root_mem_path + "/"+pair_set + "intact_{}_sat.pkl".format(memory_path), "wb")
+        f = open(root_mem_path + "/"+pair_set + "intact_{}_densat.pkl".format(memory_path), "wb")
         pickle.dump(scores, f)
         f.close()
 

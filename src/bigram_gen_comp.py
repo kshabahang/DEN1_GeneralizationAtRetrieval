@@ -89,32 +89,32 @@ if __name__ == "__main__":
         C[:, :] += load_csr(root_mem_path + "/{}/C_{}_{}".format(memory_path, IDX, totalChunks), (V*K, V*K), dtype=np.int64)
 
 
-    f = open(root_mem_path + "/{}/A_log.txt".format(memory_path), "r")
-    A_dims = f.read().split()
-    f.close()
-    A_shape = (int(A_dims[0]), int(A_dims[1]))
+    #f = open(root_mem_path + "/{}/A_log.txt".format(memory_path), "r")
+    #A_dims = f.read().split()
+    #f.close()
+    #A_shape = (int(A_dims[0]), int(A_dims[1]))
 
 
-    
-    A = load_csr(root_mem_path + "/{}/A".format(memory_path),  A_shape, dtype=np.int32) #pre-computed
-
+    #
+    #A = load_csr(root_mem_path + "/{}/A".format(memory_path),  A_shape, dtype=np.int32) #pre-computed
+    ANet.A = None
 
 
     #maxds =[5,10,15,20,50,100,200,300,500,1000]
-    maxds = [50]#[5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100]
-    Ds = []
-    for i in range(len(maxds)):
-        MAXD = maxds[i]
-        D = load_csr(root_mem_path + "/{}/D{}_{}_{}".format(memory_path, MAXD,0, totalChunks),  (V*K, V*K), dtype=np.int64) #pre-computed
-        for IDX in range(1, nchunk):
-            D[:, :] += load_csr(root_mem_path + "/{}/D{}_{}_{}".format(memory_path,MAXD, IDX, totalChunks), (V*K, V*K), dtype=np.int64)
-        
-        Ds.append( csr_matrix(D) )
+    #maxds = [50]#[5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100]
+    #Ds = []
+    #for i in range(len(maxds)):
+    #    MAXD = maxds[i]
+    #    D = load_csr(root_mem_path + "/{}/D{}_{}_{}".format(memory_path, MAXD,0, totalChunks),  (V*K, V*K), dtype=np.int64) #pre-computed
+    #    for IDX in range(1, nchunk):
+    #        D[:, :] += load_csr(root_mem_path + "/{}/D{}_{}_{}".format(memory_path,MAXD, IDX, totalChunks), (V*K, V*K), dtype=np.int64)
+    #    
+    #    Ds.append( csr_matrix(D) )
 
 
-    ANet.Ds = Ds
-    ANet.D = ANet.Ds[0]
-    ANet.A = A
+    #ANet.Ds = Ds
+    #ANet.D = ANet.Ds[0]
+    #ANet.A = A
 
 
     ###take out any counts less than a criterion
@@ -134,24 +134,33 @@ if __name__ == "__main__":
     ##drop low freq term
     ANet.prune(min_wf = 50) #50 works
 
-    toLoad = True
-    if toLoad:
-        print("Loading weight matrix")
-        ANet.W = np.load(root_mem_path + "/{}/pmi.npy".format(memory_path))
-        print("Loading eigenspectrum")
-        ANet.ei = np.load(root_mem_path + "/{}/ei_pmi.npy".format(memory_path))
-        ANet.ev = np.load(root_mem_path + "/{}/ev_pmi.npy".format(memory_path))
-        ANet.W /= ANet.ei[0]
-        #ANet.alpha = ANet.ei[0] + 0.001
-    else:
-        print("Crunching out the weights...")
-        ANet.compute_weights(binaryMat=False)
-        print("Saving weight matrix")
-        np.save(root_mem_path + "/{}/pmi".format(memory_path), ANet.W )
-        ANet.update_eig()
-        print("Saving eigenspectrum")
-        np.save(root_mem_path + "/{}/ei_pmi".format(memory_path), ANet.ei )
-        np.save(root_mem_path + "/{}/ev_pmi".format(memory_path), ANet.ev )
+    #toLoad = True
+    #if toLoad:
+    #    print("Loading weight matrix")
+    #    ANet.W = np.load(root_mem_path + "/{}/pmi.npy".format(memory_path))
+    #    print("Loading eigenspectrum")
+    #    ANet.ei = np.load(root_mem_path + "/{}/ei_pmi.npy".format(memory_path))
+    #    ANet.ev = np.load(root_mem_path + "/{}/ev_pmi.npy".format(memory_path))
+    #    ANet.W /= ANet.ei[0]
+    #    #ANet.alpha = ANet.ei[0] + 0.001
+    #else:
+    #    print("Crunching out the weights...")
+    ANet.compute_weights(binaryMat=False)
+    #    print("Saving weight matrix")
+    #    np.save(root_mem_path + "/{}/pmi".format(memory_path), ANet.W )
+    #    ANet.update_eig()
+    #    print("Saving eigenspectrum")
+    #    np.save(root_mem_path + "/{}/ei_pmi".format(memory_path), ANet.ei )
+    #    np.save(root_mem_path + "/{}/ev_pmi".format(memory_path), ANet.ev )
+
+    ANet.nullvec = np.zeros((K*ANet.V))
+    ANet.norm_eig(verbos=True, eps=1e-5)
+    ANet.W /= (ANet.ei - 1)
+    ev = ANet.ev[:, 0]
+    eta = 0.55
+    for i in range(ANet.V*ANet.K):
+        ANet.W[i, :] -= eta*ev[i]*ev
+
 
 
 
@@ -170,7 +179,7 @@ if __name__ == "__main__":
     #e_max = 75.4832 #change this if you change the learning rule
     #ANet.alpha = 1.001
     #ANet.W /= e_max
-    ANet.nullvec = np.zeros((K*ANet.V))
+
     ANet.N = ANet.V
 
     if ANet.hparams["gpu"]:
@@ -292,7 +301,12 @@ if __name__ == "__main__":
         print("meanCorr meanIncorr stdCorr stdIncorr meanDiff stdDiff")
         print(np.mean(corr_lens), np.mean(incorr_lens), np.std(corr_lens), np.std(incorr_lens), (corr_lens - incorr_lens).mean(), (corr_lens - incorr_lens).std(), (corr_lens - incorr_lens).mean()/(corr_lens - incorr_lens).std())
 
-        f = open(root_mem_path + "/"+pair_set + "_{}.pkl".format(memory_path), "wb")
+        if toLesion:
+            fname = pair_set + "_lesioned_{}.pkl".format(memory_path)
+        else:
+            fname = pair_set + "_intact_{}.pkl".format(memory_path)
+
+        f = open(root_mem_path + "/"+ fname, "wb")
         pickle.dump(scores, f)
         f.close()
 
