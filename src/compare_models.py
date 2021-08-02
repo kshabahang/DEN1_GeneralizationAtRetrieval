@@ -44,20 +44,20 @@ d_by_model = {models[i]:{} for i in range(len(models))}
 grammatical = {models[i]:{} for i in range(len(models))}
 ungrammatical = {models[i]:{} for i in range(len(models))}
 ds = []
-cond = "lesioned"
+cond = "intact"
 #models = models[1:]
 for i in range(len(pairs)):
     idx = isort[i]
     if cond == "lesioned":
         #
         fnames = ["../rsc/partialInhibition_linpers_{}/{}_{}_{}.pkl".format(cond, pairs[idx], corpus , cond + "_pers"),
-                  "../rsc/partialInhibition_{}/{}_{}.pkl".format(cond, pairs[idx], corpus), 
+                  "../rsc/partialInhibition_{}/{}_{}_{}.pkl".format(cond, pairs[idx], cond, corpus), 
                   "../rsc/PersSat_{}/{}_{}_{}_sat.pkl".format(cond, pairs[idx], corpus, cond)]
 
     else:
         fnames = ["../rsc/partialInhibition_linpers_{}/{}_{}.pkl".format(cond, pairs[idx], corpus + "_pers"),
-                  "../rsc/partialInhibition_{}/{}_{}.pkl".format(cond, pairs[idx], corpus), 
-                  "../rsc/PersSat_{}/{}_{}_{}_sat.pkl".format(cond, pairs[idx], corpus, cond)]
+                  "../rsc/partialInhibition_{}/{}_{}_{}.pkl".format(cond, pairs[idx],cond, corpus), 
+                  "../rsc/PersSat_{}/{}{}_{}_sat.pkl".format(cond, pairs[idx], cond, corpus)]
     #fnames = fnames[1:]
 
     for j in range(len(fnames)):
