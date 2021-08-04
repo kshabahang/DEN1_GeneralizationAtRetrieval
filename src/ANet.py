@@ -1015,8 +1015,10 @@ class AssociativeNet(Model):
                     o[i*self.N+self.I[w_i]] += 1
         elif self.hparams["distributed"]:
             for i in range(min(len(input_sentence), numSlots)):
-                w_i = input_sentence[iShiftS + i]
-                o[i*self.N:(i+1)*self.N] = self.E[self.I[w_i]]
+
+                if input_sentence[iShiftS + i] != "_":
+                    w_i = input_sentence[iShiftS + i]
+                    o[i*self.N:(i+1)*self.N] = self.E[self.I[w_i]]
         return o
     def encode(self, sentence, st = 1.0, toNorm = True):
         X_o = self.sent2vec(sentence.split())

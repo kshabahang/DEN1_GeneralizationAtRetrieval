@@ -191,6 +191,9 @@ if __name__ == "__main__":
     for i in range(ANet.N*ANet.K):
         ANet.W[i, :] -= eta*ev[i]*ev
     
+    ANet.W *= ANet.ei
+    ANet.alpha = ANet.ei + ANet.ei*0.001
+
     ANet.N = 1*N
     E = np.array(ANet.E).T
 
@@ -334,8 +337,11 @@ if __name__ == "__main__":
         #ANet.print_eigenspectrum()
         print("meanCorr meanIncorr stdCorr stdIncorr meanDiff stdDiff")
         print(np.mean(corr_lens), np.mean(incorr_lens), np.std(corr_lens), np.std(incorr_lens), (corr_lens - incorr_lens).mean(), (corr_lens - incorr_lens).std(), (corr_lens - incorr_lens).mean()/(corr_lens - incorr_lens).std())
-
-        f = open(root_mem_path + "/"+pair_set + "_{}_bsb.pkl".format(memory_path), "wb")
+        if toLesion:
+            fname = pair_set + "_lesioned_{}_bsb.pkl".format(memory_path)
+        else:
+            fname = pair_set + "_intact_{}_bsb.pkl".format(memory_path)
+        f = open(root_mem_path + "/"+fname, "wb")
         pickle.dump(scores, f)
         f.close()
 
