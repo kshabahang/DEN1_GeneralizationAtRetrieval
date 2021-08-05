@@ -616,7 +616,7 @@ class AssociativeNet(Model):
         #self.get_top_connect() 
     
 
-        vlens = [(norm(self.echo_full), norm(self.echo_full[:self.V]), norm(self.echo_full[self.V:]))]
+        vlens = [norm(self.echo_full)]
 
         print("Adding STP")
         ###compute the next state
@@ -630,9 +630,7 @@ class AssociativeNet(Model):
             x = 1*self.echo_full
             x_new = x.dot(self.W) #- self.eta*x.dot(self.ev[:, 0])*self.ev[:, 0]
             vlen = float(norm(x_new))
-            vlen1= float(norm(x_new[:self.V]))
-            vlen2= float(norm(x_new[self.V:]))
-            vlens.append((vlen, vlen1, vlen2))
+            vlens.append(vlen)
             x_new = x_new/vlen
             diff = norm(x - x_new)
             count = 0
@@ -654,9 +652,7 @@ class AssociativeNet(Model):
                 x_new = x.dot(self.W) #- self.eta*x.dot(self.ev[:, 0])*self.ev[:, 0] 
 
                 vlen = float(norm(x_new))
-                vlen1= float(norm(x_new[:self.V]))
-                vlen2= float(norm(x_new[self.V:]))
-                vlens.append((vlen, vlen1, vlen2))
+                vlens.append(vlen)
 
                 frames.append(deepcopy(x_new ))
                 x_new = x_new/vlen
