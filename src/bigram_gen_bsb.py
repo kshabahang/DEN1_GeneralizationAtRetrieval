@@ -197,6 +197,7 @@ if __name__ == "__main__":
     ANet.N = 1*N
     E = np.array(ANet.E).T
 
+    W_old = 1*ANet.W
     W_new = np.zeros((ANet.N*ANet.K, ANet.N*ANet.K))
     for p in range(ANet.K):
         for q in range(p, ANet.K):
@@ -222,7 +223,7 @@ if __name__ == "__main__":
 
 
     
-    toLesion = False
+    toLesion = True
 
     pairs = "VB_RBR_2_RBR_VB PPRS_NN_2_PPR_NN IN_VBG_2_IN_VBP NNS_VBP_2_NN_VBP NN_VBZ_2_NN_VBP DT_NN_2_NN_DT JJ_NN_2_NN_JJ NN_IN_2_IN_NN PPR_VBP_2_PPRS_VBP".split()#[1:]
 
@@ -292,7 +293,14 @@ if __name__ == "__main__":
 
             if w1_c in ANet.I and w2_c in ANet.I and w1_i in ANet.I and w2_i in ANet.I:
                 if toLesion:
-                    ANet - (w1_c, w2_c)
+                    #ANet - (w1_c, w2_c) NOTE not implemented for distributed version yet
+                    weight = W_old[ANet.I[w1_c], ANet.I[w2_c]] #keep old weight 
+                    v1 = ANet.E[ANet.I[w1_c]]
+                    v2 = ANet.E[ANet.I[w2_c]]
+                    v = np.hstack([v1, v2])
+                    M = np.outer(v, v)
+                    ANet.W -= weight*M
+
 
                 for i in range(len(probes)):
                     probe = probes[i]
@@ -323,7 +331,8 @@ if __name__ == "__main__":
                         scores[labels[i]]["freq"].append(frq)
 
                 if toLesion:
-                    ~ ANet #reset
+                    #~ ANet #reset
+                    ANet.W += weight*M
 
 
         if toLesion:

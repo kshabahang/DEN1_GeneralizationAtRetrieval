@@ -154,13 +154,14 @@ if __name__ == "__main__":
     #    np.save(root_mem_path + "/{}/ev_pmi".format(memory_path), ANet.ev )
 
     ANet.nullvec = np.zeros((K*ANet.V))
-    ANet.norm_eig(verbos=True, eps=1e-5)
-    ANet.W /= (ANet.ei - 1)
+    ANet.norm_eig(verbos=True, eps=1e-8)
+    #ANet.W /= (ANet.ei - 1)
     ev = ANet.ev[:, 0]
     eta = 0.55
     for i in range(ANet.V*ANet.K):
-        ANet.W[i, :] -= eta*ev[i]*ev
+        ANet.W[i, :] -= eta*ev[i]*ev*ANet.ei 
 
+    ANet.alpha = ANet.ei + 0.001*ANet.ei
 
 
 
@@ -185,7 +186,7 @@ if __name__ == "__main__":
     if ANet.hparams["gpu"]:
         ANet.nullvec = ANet.nullvec.cuda()
     
-    toLesion = True
+    toLesion = False
 
     pairs = "VB_RBR_2_RBR_VB PPRS_NN_2_PPR_NN IN_VBG_2_IN_VBP NNS_VBP_2_NN_VBP NN_VBZ_2_NN_VBP DT_NN_2_NN_DT JJ_NN_2_NN_JJ NN_IN_2_IN_NN PPR_VBP_2_PPRS_VBP".split()#[1:]
 
@@ -266,11 +267,11 @@ if __name__ == "__main__":
                     #change = round(np.linalg.norm(ANet.frames[0] - ANet.frames[-1]), 3)
                     cycles = ANet.count
                     if i == 0:
-                        corr_lens.append(ANet.vlens[-1][0])
-                        corr_lens1.append(ANet.vlens[1][0])
+                        corr_lens.append(ANet.vlens[-1])
+                        corr_lens1.append(ANet.vlens[1])
                     else:
-                        incorr_lens.append(ANet.vlens[-1][0])
-                        incorr_lens1.append(ANet.vlens[1][0])
+                        incorr_lens.append(ANet.vlens[-1])
+                        incorr_lens1.append(ANet.vlens[1])
         
                     if "vlens" not in scores[labels[i]]:
                         scores[labels[i]]["vlens"] = [ANet.vlens[-1]]
