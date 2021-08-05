@@ -67,7 +67,7 @@ if __name__ == "__main__":
                "numSlots":K,
                "C":1,
                "mode":"numpy",
-               "feedback":"DENSat",
+               "feedback":"persist",
                "init_weights":False,
                "gpu":False,
                "localist":True,
@@ -186,13 +186,14 @@ if __name__ == "__main__":
     #ANet.N = ANet.V
     #ANet.W = np.array(ANet.COUNTS.todense()).astype(float)
     ANet.norm_eig(verbos=True, eps=1e-5)
-    ANet.W /= (ANet.ei - 1)
+    #ANet.W /= (ANet.ei - 1)
     ev = ANet.ev[:, 0]
     eta = 0.55
     for i in range(ANet.V*ANet.K):
-        ANet.W[i, :] -= eta*ev[i]*ev
+        ANet.W[i, :] -= eta*ev[i]*ev*ANet.ei 
 
     ANet.N = ANet.V
+    ANet.alpha = ANet.ei + 0.001*ANet.ei
     
     #ANet.N = 1*N
     #E = np.array(ANet.E).T
@@ -210,7 +211,7 @@ if __name__ == "__main__":
     
     
     
-    ANet.theta =1e-6
+    #ANet.theta =1e-6
     
     
 
@@ -222,7 +223,7 @@ if __name__ == "__main__":
 
 
     
-    toLesion = True
+    toLesion = False
 
     pairs = "VB_RBR_2_RBR_VB PPRS_NN_2_PPR_NN IN_VBG_2_IN_VBP NNS_VBP_2_NN_VBP NN_VBZ_2_NN_VBP DT_NN_2_NN_DT JJ_NN_2_NN_JJ NN_IN_2_IN_NN PPR_VBP_2_PPRS_VBP".split()#[1:]
 
@@ -328,7 +329,9 @@ if __name__ == "__main__":
 
         if toLesion:
             print( "Lesioned")
+            fname = pair_set + "intact_{}_pers_lesioned.pkl".format(memory_path)
         else:
+            fname = pair_set + "intact_{}_pers_intact.pkl".format(memory_path)
             print("Not lesioned")
 
         corr_lens = np.array(corr_lens)
@@ -338,7 +341,7 @@ if __name__ == "__main__":
         print("meanCorr meanIncorr stdCorr stdIncorr meanDiff stdDiff")
         print(np.mean(corr_lens), np.mean(incorr_lens), np.std(corr_lens), np.std(incorr_lens), (corr_lens - incorr_lens).mean(), (corr_lens - incorr_lens).std(), (corr_lens - incorr_lens).mean()/(corr_lens - incorr_lens).std())
 
-        f = open(root_mem_path + "/"+pair_set + "intact_{}_densat.pkl".format(memory_path), "wb")
+        f = open(root_mem_path + "/"+ fname, "wb")
         pickle.dump(scores, f)
         f.close()
 

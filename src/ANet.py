@@ -524,8 +524,8 @@ class AssociativeNet(Model):
         x_new = x.dot(self.W) + self.alpha*x0 
         vlen = norm(x_new)
         vlens.append(vlen)
-        #x_new /= vlen
-        x_new.clip(min=-self.theta, max=self.theta,out=x_new )
+        x_new /= vlen
+        #x_new.clip(min=-self.theta, max=self.theta,out=x_new )
         
         
         diff = norm(x0 - x_new)
@@ -545,8 +545,8 @@ class AssociativeNet(Model):
             x_new = x.dot(self.W) + self.alpha*x0#self.MatMul(x, 0*x)#self.echo_full.dot(self.W)#self.MatMul(self.echo_full, x0) 
             vlen = float(norm(x_new))
             vlens.append(vlen)
-            #x_new /= vlen
-            x_new.clip(min=-self.theta, max=self.theta,out=x_new )
+            x_new /= vlen
+            #x_new.clip(min=-self.theta, max=self.theta,out=x_new )
 
             diff =  float(norm(x - x_new))
       
