@@ -23,6 +23,28 @@ def load_csr(fpath, shape, dtype=np.float64, itype=np.int32):
     return csr_matrix((data, indices, indptr), shape = shape)
 
 
+class OBVGen(object):
+    def __init__(self, k):
+        '''constructs 2**k orthogonal bi-polar vectors'''
+        self.N = 2**k
+        v = np.array([1])
+        self.E = []
+        self.expand(v)
+
+    def expand(self, v):
+        v1 = np.hstack([v,v])
+        v2 = np.hstack([v,-v])
+        if len(v1) < self.N:
+            self.expand(v1)
+            self.expand(v2)
+        else:
+            self.E.append(v1)
+            self.E.append(v2)
+
+
+
+
+
 def proj(a, v):
     return (a.dot(v)/v.dot(v))*v
 
@@ -48,11 +70,11 @@ if __name__ == "__main__":
                "numSlots":K,
                "C":1,
                "mode":"numpy",
-               "feedback":"stp",
+               "feedback":"saturate",
                "init_weights":False,
                "gpu":False,
-               "localist":True,
-               "distributed":False,
+               "localist":False,
+               "distributed":True,
                "maxiter":1000,
                "explicit":True,
                "sparse":False,
@@ -114,6 +136,18 @@ if __name__ == "__main__":
     ANet.prune(min_wf = 70) #10
 
 
+
+    if hparams["distributed"]:
+        print("Constructing e-vecs")
+        obv = OBVGen(14)
+        #ANet.E = list(np.load(root_mem_path + "/{}/E{}.npy".format(memory_path, N)))
+    
+        ANet.E = obv.E[:ANet.V]/np.linalg.norm(obv.E[0])
+    
+    ANet.nullvec = np.zeros(ANet.N*ANet.K)
+
+
+
     #toLoad = True
     #if toLoad:
     #    print("Loading weight matrix")
@@ -151,8 +185,20 @@ if __name__ == "__main__":
     
     ANet.alpha = ANet.ei + 0.001*ANet.ei
 
+    ANet.N = 1*N
+    E = np.array(ANet.E).T
+    
+    W_old = 1*ANet.W
+    W_new = np.zeros((ANet.N*ANet.K, ANet.N*ANet.K))
+    for p in range(ANet.K):
+        for q in range(ANet.K):
+            W_new[p*ANet.N:(p+1)*ANet.N, q*ANet.N:(q+1)*ANet.N] = E.dot(ANet.W[p*ANet.V:(p+1)*ANet.V, q*ANet.V:(q+1)*ANet.V]).dot(E.T)
+    
+    ANet.W = W_new
 
 
+
+    ANet.theta = 1
 
     toLesion = False
 

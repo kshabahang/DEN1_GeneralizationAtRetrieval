@@ -271,7 +271,7 @@ if __name__ == "__main__":
             print("Not lesioned")
 
 
-        f = open(root_mem_path + "/{}/cole_intact.pkl".format(memory_path), "wb")
+        f = open(root_mem_path + "/{}/cole_intact_den.pkl".format(memory_path), "wb")
         pickle.dump(scores, f)
         f.close()
 
