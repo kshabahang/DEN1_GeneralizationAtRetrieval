@@ -469,7 +469,7 @@ class AssociativeNet(Model):
         diff = norm(x0 - x_new)
         count = 0
         #while(diff > self.eps and count < self.maxiter):
-        while(set(self.echo_full) != {-theta, theta}):
+        while(set(self.echo_full) != {-theta, theta} and count < self.maxiter):
             #print(set(self.echo_full))
             count += 1
             ###load buffer with new state

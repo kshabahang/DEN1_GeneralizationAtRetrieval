@@ -72,7 +72,7 @@ if __name__ == "__main__":
                "gpu":False,
                "localist":False,
                "distributed":True,
-               "maxiter":1000,
+               "maxiter":100,
                "explicit":True,
                "sparse":False,
                "row_center":False,
@@ -200,7 +200,7 @@ if __name__ == "__main__":
     W_old = 1*ANet.W
     W_new = np.zeros((ANet.N*ANet.K, ANet.N*ANet.K))
     for p in range(ANet.K):
-        for q in range(p, ANet.K):
+        for q in range(ANet.K):
             W_new[p*ANet.N:(p+1)*ANet.N, q*ANet.N:(q+1)*ANet.N] = E.dot(ANet.W[p*ANet.V:(p+1)*ANet.V, q*ANet.V:(q+1)*ANet.V]).dot(E.T) 
 
     ANet.W = W_new
@@ -234,7 +234,11 @@ if __name__ == "__main__":
         grammatical = "VB_RBR PPRS_NN IN_VBG NNS_VBP NN_VBZ DT_NN JJ_NN NN_IN PPR_VBP".split()
         ungrammatical="RBR_VB PPR_NN IN_VBP NN_VBP NN_VBP NN_DT NN_JJ IN_NN PPRS_VBP".split()
 
-        for comp_idx in range(len(pairs)):
+        #for comp_idx in range(3):
+        #for comp_idx in range(3, 6):
+        for comp_idx in range(6, len(pairs)):
+        #for comp_idx in range(3, len(pairs)):
+        #for comp_idx in range(4):
 
 
 
