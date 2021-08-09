@@ -96,11 +96,11 @@ if __name__ == "__main__":
 
 
     
-    A = load_csr(root_mem_path + "/{}/A".format(memory_path),  A_shape, dtype=np.int32) #pre-computed
+    #A = load_csr(root_mem_path + "/{}/A".format(memory_path),  A_shape, dtype=np.int32) #pre-computed
 
 
 
-    ANet.A = A
+    ANet.A = None# A
 
 
 
@@ -114,25 +114,26 @@ if __name__ == "__main__":
     ANet.prune(min_wf = 70) #10
 
 
-    toLoad = True
-    if toLoad:
-        print("Loading weight matrix")
-        ANet.W = np.load(root_mem_path + "/{}/pmi.npy".format(memory_path))
-        print("Loading eigenspectrum")
-        ANet.ei = np.load(root_mem_path + "/{}/ei_pmi.npy".format(memory_path))
-        ANet.ev = np.load(root_mem_path + "/{}/ev_pmi.npy".format(memory_path))
-        ANet.W /= ANet.ei[0]
-    else:
-        print("Crunching out the weights...")
-        ANet.compute_weights(binaryMat=False)
-        print("Saving weight matrix")
-        np.save(root_mem_path + "/{}/pmi".format(memory_path), ANet.W )
-        ANet.update_eig()
-        print("Saving eigenspectrum")
-        np.save(root_mem_path + "/{}/ei_pmi".format(memory_path), ANet.ei )
-        np.save(root_mem_path + "/{}/ev_pmi".format(memory_path), ANet.ev )
+    #toLoad = True
+    #if toLoad:
+    #    print("Loading weight matrix")
+    #    ANet.W = np.load(root_mem_path + "/{}/pmi.npy".format(memory_path))
+    #    print("Loading eigenspectrum")
+    #    ANet.ei = np.load(root_mem_path + "/{}/ei_pmi.npy".format(memory_path))
+    #    ANet.ev = np.load(root_mem_path + "/{}/ev_pmi.npy".format(memory_path))
+    #    ANet.W /= ANet.ei[0]
+    #else:
+    #    print("Crunching out the weights...")
+    #    ANet.compute_weights(binaryMat=False)
+    #    print("Saving weight matrix")
+    #    np.save(root_mem_path + "/{}/pmi".format(memory_path), ANet.W )
+    #    ANet.update_eig()
+    #    print("Saving eigenspectrum")
+    #    np.save(root_mem_path + "/{}/ei_pmi".format(memory_path), ANet.ei )
+    #    np.save(root_mem_path + "/{}/ev_pmi".format(memory_path), ANet.ev )
 
 
+    ANet.compute_weights(binaryMat=False)
 
 
     ANet.nullvec = np.zeros((K*ANet.V))
@@ -141,6 +142,18 @@ if __name__ == "__main__":
     if ANet.hparams["gpu"]:
         ANet.nullvec = ANet.nullvec.cuda()
     
+
+    ANet.norm_eig(verbos=True, eps=1e-8)
+    ev = ANet.ev[:, 0]
+    eta = 0.55
+    for i in range(ANet.V*ANet.K):
+        ANet.W[i, :] -= eta*ev[i]*ev*ANet.ei
+    
+    ANet.alpha = ANet.ei + 0.001*ANet.ei
+
+
+
+
     toLesion = False
 
 

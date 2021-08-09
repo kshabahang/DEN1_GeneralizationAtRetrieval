@@ -184,14 +184,19 @@ if __name__ == "__main__":
 
     N = 1*ANet.N
     ANet.N = ANet.V
+    #ANet.norm_eig(verbos=True, eps=1e-5)
+    #ANet.W /= ANet.ei
+    #ev = ANet.ev[:, 0]
+    #eta = 0.55
+    #for i in range(ANet.N*ANet.K):
+    #    ANet.W[i, :] -= eta*ev[i]*ev*ANet.ei
+   
+
     ANet.norm_eig(verbos=True, eps=1e-5)
-    ANet.W /= ANet.ei
-    ev = ANet.ev[:, 0]
-    eta = 0.55
-    for i in range(ANet.N*ANet.K):
-        ANet.W[i, :] -= eta*ev[i]*ev
-    
-    ANet.W *= ANet.ei
+    ei1 = ANet.ei
+
+
+    #ANet.W *= ANet.ei
     ANet.alpha = ANet.ei + ANet.ei*0.001
 
     ANet.N = 1*N
@@ -204,10 +209,15 @@ if __name__ == "__main__":
             W_new[p*ANet.N:(p+1)*ANet.N, q*ANet.N:(q+1)*ANet.N] = E.dot(ANet.W[p*ANet.V:(p+1)*ANet.V, q*ANet.V:(q+1)*ANet.V]).dot(E.T) 
 
     ANet.W = W_new
+
+    ANet.V = ANet.N
+    ANet.norm_eig(verbos=True, eps=1e-5)
+    ei2 = ANet.ei
+    
     #ANet.update_eig()
     ANet.theta = 1
 
-
+    print(ei1, ei2)
     
     
     
