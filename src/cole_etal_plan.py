@@ -48,7 +48,7 @@ if __name__ == "__main__":
                "numSlots":K,
                "C":1,
                "mode":"numpy",
-               "feedback":"stp",
+               "feedback":"persist",
                "init_weights":False,
                "gpu":False,
                "localist":True,
