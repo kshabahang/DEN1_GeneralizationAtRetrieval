@@ -39,25 +39,25 @@ ug_types = []
 g_types = []
 
 
-models = ["pLAN", "DEN", "pSat"]
+models = ["pLAN", "DEN", "BSB"]
 d_by_model = {models[i]:{} for i in range(len(models))}
 grammatical = {models[i]:{} for i in range(len(models))}
 ungrammatical = {models[i]:{} for i in range(len(models))}
 ds = []
-cond = "intact"
+cond = "lesioned"
 #models = models[1:]
 for i in range(len(pairs)):
     idx = isort[i]
     if cond == "lesioned":
         #
-        fnames = ["../rsc/partialInhibition_linpers_{}/{}_{}_{}.pkl".format(cond, pairs[idx], corpus , cond + "_pers"),
-                  "../rsc/partialInhibition_{}/{}_{}_{}.pkl".format(cond, pairs[idx], cond, corpus), 
-                  "../rsc/PersSat_{}/{}_{}_{}_sat.pkl".format(cond, pairs[idx], corpus, cond)]
+        fnames = ["../rsc/partialInhibition_linpers_{}/{}intact_{}_pers_{}.pkl".format(cond, pairs[idx], corpus , cond),
+                  "../rsc/partialInhibition_distden_{}/{}_{}_{}_dendit.pkl".format(cond, pairs[idx], cond, corpus), 
+                  "../rsc/BSB_{}/{}_{}_{}_bsb.pkl".format(cond, pairs[idx], cond,corpus)]
 
     else:
-        fnames = ["../rsc/partialInhibition_linpers_{}/{}_{}.pkl".format(cond, pairs[idx], corpus + "_pers"),
+        fnames = ["../rsc/partialInhibition_linpers_{}/{}intact_{}_pers_{}.pkl".format(cond, pairs[idx], corpus, cond),
                   "../rsc/partialInhibition_{}/{}_{}_{}.pkl".format(cond, pairs[idx],cond, corpus), 
-                  "../rsc/PersSat_{}/{}{}_{}_sat.pkl".format(cond, pairs[idx], cond, corpus)]
+                  "../rsc/BSB_{}/{}_{}_{}_bsb.pkl".format(cond, pairs[idx], cond, corpus)]
     #fnames = fnames[1:]
 
     for j in range(len(fnames)):
@@ -91,7 +91,8 @@ for i in range(len(pairs)):
 
 
 
-        if "linpers" not in fnames[j] and "bsb" not in fnames[j] and "sat" not in fnames[j]:
+        #if models[j] == 'DEN':
+        if False:
             correct = np.array(bgs["correct"]["vlens"])[:, 0]
             incorrect = np.array(bgs["incorrect"]["vlens"])[:, 0]
         else:
@@ -110,17 +111,17 @@ for i in range(len(pairs)):
         discrims.append(np.mean(d)/np.std(d))
 
         print()
-        print(models[j])    
+        print(models[j], d.shape, np.mean(d))    
         print(pos_lbl, len(d),np.mean(d)/np.std(d), (correct - incorrect).mean(), (correct - incorrect).std(), correct.mean(), incorrect.mean())
     ds.append(np.mean(d)/np.std(d))
 
 
 for i in range(len(pairs_fixed)):
-    print(pairs_fixed[i], round(sum(d_by_model['pSat'][pairs_fixed[i]] > 0)/len(d_by_model['pSat'][pairs_fixed[i]]), 2))
+    print(pairs_fixed[i], round(sum(d_by_model['DEN'][pairs_fixed[i]] > 0)/len(d_by_model['DEN'][pairs_fixed[i]]), 2))
 
 print()
 for i in range(len(pairs_fixed)):
-    print(pairs_fixed[i], np.mean(d_by_model['pSat'][pairs_fixed[i]])/np.std(d_by_model['pSat'][pairs_fixed[i]]))
+    print(pairs_fixed[i], np.mean(d_by_model['BSB'][pairs_fixed[i]])/np.std(d_by_model['BSB'][pairs_fixed[i]]))
 
 #plotDists = True
 #if plotDists:
@@ -136,7 +137,7 @@ for i in range(len(pairs_fixed)):
 #            subplots[i][j].axes.get_yaxis().set_visible(False)
 #            subplots[i][j].axes.get_xaxis().set_visible(False)
 
-#models= ["DEN", "pSat"]#"pLAN", "pSat"]
+#models= ["DEN", "pLAN"]#"pLAN", "pSat"]
 fig, axarr = plt.subplots(nrows =3,ncols=3)
 for i in range(3):
     for j in range(3):
@@ -193,8 +194,8 @@ for m in range(n_models):
     annotate_heatmap(im, D)
     plt.title(models[m])
     plt.tight_layout()
-    fig.savefig(models[m] + "heatmap_{}.svg".format(cond), dpi=80)
-    #fig.show()
+    #fig.savefig(models[m] + "heatmap_{}.svg".format(cond), dpi=80)
+    fig.show()
 
 
 
@@ -267,13 +268,13 @@ for i in range(len(discVsRT)):
     rts.append(float(rt))
 
 df = pd.DataFrame({"Comparison": labels, "Discriminability": ds, "Median RT": rts})
-sns.scatterplot(data=df, x="Discriminability", y = "Median RT")
-#fig, ax = plt.subplots()
-#df.plot('Discriminability', 'Mean RT', kind='scatter')
-for k, v in df.iterrows():
-    x = v["Discriminability"]
-    y = v["Median RT"]
-    txt = '-'.join(v["Comparison"].split())
-    plt.text(x,y, txt)
+#sns.scatterplot(data=df, x="Discriminability", y = "Median RT")
+##fig, ax = plt.subplots()
+##df.plot('Discriminability', 'Mean RT', kind='scatter')
+#for k, v in df.iterrows():
+#    x = v["Discriminability"]
+#    y = v["Median RT"]
+#    txt = '-'.join(v["Comparison"].split())
+#    plt.text(x,y, txt)
 
 
