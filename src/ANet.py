@@ -622,9 +622,11 @@ class AssociativeNet(Model):
         ###compute the next state
         x0 = 1*self.echo_full #for STP
         nnz0 = np.where(x0 != 0)[0]
-        for ii in nnz0:
-            for jj in nnz0:
-                self.W[ii, jj] += self.alpha*x0[ii]*x0[jj]
+        #for ii in nnz0:
+        #    for jj in nnz0:
+        #        self.W[ii, jj] += self.alpha*x0[ii]*x0[jj]
+        stp = self.alpha*np.outer(x0, x0)
+        self.W += stp
 
         try: #this is here to ensure stp is taken back out in case of interruption..feel free to crt-c out
             x = 1*self.echo_full
@@ -660,16 +662,18 @@ class AssociativeNet(Model):
                 diff =  float(norm(x - x_new))
 
 
-            for ii in nnz0:
-                for jj in nnz0:
-                    self.W[ii, jj] -= self.alpha*x0[ii]*x0[jj]
+            #for ii in nnz0:
+            #    for jj in nnz0:
+            #        self.W[ii, jj] -= self.alpha*x0[ii]*x0[jj]
+            self.W -= stp
                 
         except Exception as e:
             count = 0 #reset weights to before stp
             print(e)
-            for ii in nnz0:
-                for jj in nnz0:
-                    self.W[ii, jj] -= self.alpha*x0[ii]*x0[jj]
+            #for ii in nnz0:
+            #    for jj in nnz0:
+            #        self.W[ii, jj] -= self.alpha*x0[ii]*x0[jj]
+            self.W -= stp
 
 
 

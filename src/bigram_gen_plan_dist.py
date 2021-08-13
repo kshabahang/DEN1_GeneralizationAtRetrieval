@@ -1,5 +1,4 @@
 import sys, os
-
 from ANet import *
 #from matplotlib import pyplot as plt
 #plt.ion()
@@ -68,7 +67,7 @@ if __name__ == "__main__":
                "numSlots":K,
                "C":1,
                "mode":"numpy",
-               "feedback":"saturate",
+               "feedback":"persist",
                "init_weights":False,
                "gpu":False,
                "localist":False,
@@ -148,6 +147,7 @@ if __name__ == "__main__":
         #ANet.E = list(np.load(root_mem_path + "/{}/E{}.npy".format(memory_path, N)))
 
         ANet.E = obv.E[:ANet.V]/np.linalg.norm(obv.E[0])
+        ANet.E = ANet.E[::-1] 
 
     ANet.nullvec = np.zeros(ANet.N*ANet.K)
 
@@ -216,7 +216,7 @@ if __name__ == "__main__":
     #ei2 = ANet.ei
     
     #ANet.update_eig()
-    ANet.theta = 10
+    ANet.theta = 1
 
     #print(ei1, ei2)
     
@@ -234,7 +234,7 @@ if __name__ == "__main__":
 
 
     
-    toLesion = True
+    toLesion = True #True
 
     pairs = "VB_RBR_2_RBR_VB PPRS_NN_2_PPR_NN IN_VBG_2_IN_VBP NNS_VBP_2_NN_VBP NN_VBZ_2_NN_VBP DT_NN_2_NN_DT JJ_NN_2_NN_JJ NN_IN_2_IN_NN PPR_VBP_2_PPRS_VBP".split()#[1:]
 
@@ -248,8 +248,8 @@ if __name__ == "__main__":
         #for comp_idx in range(3):
         #for comp_idx in range(3, 6):
         #for comp_idx in range(6, len(pairs)):
+        #for comp_idx in range(3, len(pairs)):
         for comp_idx in range(len(pairs)):
-        #for comp_idx in range(4):
 
 
 
@@ -364,9 +364,9 @@ if __name__ == "__main__":
             print("meanCorr meanIncorr stdCorr stdIncorr meanDiff stdDiff")
             print(np.mean(corr_lens), np.mean(incorr_lens), np.std(corr_lens), np.std(incorr_lens), (corr_lens - incorr_lens).mean(), (corr_lens - incorr_lens).std(), (corr_lens - incorr_lens).mean()/(corr_lens - incorr_lens).std())
             if toLesion:
-                fname = pair_set + "_lesioned_{}_theta{}_bsb.pkl".format(memory_path, ANet.theta)
+                fname = pair_set + "_lesioned_{}_plandist.pkl".format(memory_path)
             else:
-                fname = pair_set + "_intact_{}_theta{}_bsb.pkl".format(memory_path, ANet.theta)
+                fname = pair_set + "_intact_{}_plandist.pkl".format(memory_path)
             f = open(root_mem_path + "/"+fname, "wb")
             pickle.dump(scores, f)
             f.close()
