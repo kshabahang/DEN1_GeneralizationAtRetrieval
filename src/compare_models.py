@@ -56,7 +56,7 @@ for i in range(len(pairs)):
 
     else:
         fnames = ["../rsc/partialInhibition_linpers_{}/{}intact_{}_pers_{}.pkl".format(cond, pairs[idx], corpus, cond),
-                  "../rsc/partialInhibition_{}/{}_{}_{}.pkl".format(cond, pairs[idx],cond, corpus), 
+                  "../rsc/partialInhibition_distden_{}/{}_{}_{}_dendist.pkl".format(cond, pairs[idx],cond, corpus), 
                   "../rsc/BSB_{}/{}_{}_{}_bsb.pkl".format(cond, pairs[idx], cond, corpus)]
     #fnames = fnames[1:]
 
@@ -226,7 +226,7 @@ for i in range(len(pairs_fixed)):
     frqInfoFull[i, :3, :] = g.T
     frqInfoFull[i, 3:, :] = ug.T
 
-    print(pairs_fixed[i], g_fr, g1_fr, g2_fr, ug_fr, ug1_fr, ug2_fr,np.mean(scores[pairs_fixed[i]])/np.std(scores[pairs_fixed[i]]) )
+    print(pairs_fixed[i], g_fr, g1_fr, g2_fr, ug_fr, ug1_fr, ug2_fr,np.mean(d_by_model['DEN'][pairs_fixed[i]])/np.std(d_by_model['DEN'][pairs_fixed[i]]) )
     frqInfo[i, :] = np.array([g_fr, g1_fr, g2_fr, ug_fr, ug1_fr, ug2_fr])
 
 
