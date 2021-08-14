@@ -326,6 +326,40 @@ class AssociativeNet(Model):
         percent_kept =  round((V/V0)*100, 2)
         print("Pruned vocabulary by discarding terms with frequency lower than {}".format(min_wf))
         print("Vocabulary size reduced from {} to {} ({}%)".format(V0, V, percent_kept ))
+    
+    def prune_by_targ(self, targ_V):
+        V0 = self.V
+        K = self.K
+        wfs = np.array(self.COUNTS[:V0, :V0].sum(axis=0))[0]
+        isort = np.argsort(wfs)[::-1]
+        vocab_mask = np.array([i in isort[:targ_V] for i in range(V0)])
+        counts_mask = np.zeros(K*V0)
+        for k in range(K):
+            counts_mask[k*V0:(k+1)*V0] = vocab_mask
+        counts_mask = counts_mask.astype(bool)
+        self.COUNTS = self.COUNTS[counts_mask, :][:, counts_mask]
+        self.counts_mask = counts_mask
+        if self.A is not None:
+            self.A = self.A[:, counts_mask]
+            experience_mask = np.array(self.A.sum(axis=1)).squeeze() >= 2
+            self.A = self.A[experience_mask, :]
+        
+        self.vocab_mask = vocab_mask
+        
+        vocab_new = np.array(self.vocab)[vocab_mask]
+        V = len(vocab_new)
+        #remap vocab and I
+        I_new = {vocab_new[i]:i for i in range(V)}
+        
+        self.V = V
+        self.vocab = vocab_new
+        self.I = I_new
+        print(V0, V)
+        percent_kept =  round((V/V0)*100, 2)
+        print("Pruned vocabulary with V forced to {}".format(targ_V))
+        print("Vocabulary size reduced from {} to {} ({}%)".format(V0, V, percent_kept ))
+
+
 
 
     def update_eig(self):

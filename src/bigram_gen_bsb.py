@@ -311,7 +311,7 @@ if __name__ == "__main__":
                 if w1_c in ANet.I and w2_c in ANet.I and w1_i in ANet.I and w2_i in ANet.I:
                     if toLesion:
                         #ANet - (w1_c, w2_c) NOTE not implemented for distributed version yet
-                        weight = W_old[ANet.I[w1_c], ANet.I[w2_c]] #keep old weight 
+                        weight = W_old[ANet.I[w1_c], ANet.V + ANet.I[w2_c]] #keep old weight 
                         v1 = ANet.E[ANet.I[w1_c]]
                         v2 = ANet.E[ANet.I[w2_c]]
                         v = np.hstack([v1, v2])

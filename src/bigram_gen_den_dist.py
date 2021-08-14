@@ -137,7 +137,10 @@ if __name__ == "__main__":
     if ANet.hparams["gpu"]:
         ANet.nullvec = ANet.nullvec.cuda()
 
-    ANet.prune(min_wf = 50) #50 works
+
+
+    #ANet.prune(min_wf = 50) #50 works
+    ANet.prune_by_targ(targ_V = N)
 
 
 
