@@ -35,6 +35,12 @@ Once you got your corpus processed, run "bigram_gen.py TASA" to run model on the
 
 
 
+If this work was useful to you and you want to somehow thank my work, donations are welcome:
+<p>ETH: 0x5831aa28D2378Ae5333f57B3C2d8FeC3C736eEeb</p>
+<p>XMR: 44q99xTChW3B8dNykAGRza66TRZi2wpnAZtj2FuGwwL9H8shiXJYwgcicGf529uufyRDBMsLTLXAcKWohQRHvvdfUw4fWm2</p>
+<p>DODGE: DEhsBqavQmY2i7RgZQCsjXeTY9kceuy454</p>
+<p>LTC: ltc1qq9gdv7tpmwutdxvap05t049rvm96qtmmmtshs2</p>
+
 
 
  
